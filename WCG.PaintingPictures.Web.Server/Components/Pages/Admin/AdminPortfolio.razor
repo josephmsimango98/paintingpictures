@@ -1,0 +1,115 @@
+@page "/admin/portfolio"
+@attribute [Authorize(Roles = "admin")]
+@rendermode InteractiveServer
+@inject PortfolioService PortfolioService
+
+<PageTitle>Portfolio — Admin</PageTitle>
+
+<SiteHeader />
+
+<div class="pp-admin-page">
+    <div class="pp-admin-header">
+        <h2 class="pp-admin-title">Portfolio items</h2>
+        <div class="pp-admin-header-actions">
+            <FluentButton Appearance="Appearance.Accent" @onclick="NewItem">+ New item</FluentButton>
+            <a href="/admin" class="pp-admin-back">← Dashboard</a>
+        </div>
+    </div>
+
+    @if (Editing != null)
+    {
+        <div class="pp-admin-form-wrap">
+            <h3 class="pp-admin-form-title">@(Editing.Id == 0 ? "New item" : "Edit item")</h3>
+            <div class="pp-admin-form">
+                <label class="pp-admin-label">Title</label>
+                <input class="pp-admin-input" @bind="Editing.Title" placeholder="Title" />
+
+                <label class="pp-admin-label">Type</label>
+                <select class="pp-admin-input" @bind="Editing.Type">
+                    <option value="photograph">Photograph</option>
+                    <option value="drawing">Drawing</option>
+                    <option value="poem">Poem</option>
+                </select>
+
+                <label class="pp-admin-label">Image URL</label>
+                <input class="pp-admin-input" @bind="Editing.Image" placeholder="https://..." />
+
+                <label class="pp-admin-label">Description</label>
+                <textarea class="pp-admin-input pp-admin-textarea" @bind="Editing.Description" placeholder="Description"></textarea>
+
+                <label class="pp-admin-label">Poem</label>
+                <textarea class="pp-admin-input pp-admin-textarea" @bind="Editing.Poem" placeholder="Poem text"></textarea>
+
+                <label class="pp-admin-label">Thoughts</label>
+                <textarea class="pp-admin-input pp-admin-textarea" @bind="Editing.Thoughts" placeholder="Thoughts"></textarea>
+
+                <div class="pp-admin-form-actions">
+                    <FluentButton Appearance="Appearance.Accent" @onclick="SaveItem">Save</FluentButton>
+                    <FluentButton Appearance="Appearance.Neutral" @onclick="CancelEdit">Cancel</FluentButton>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="pp-admin-table-wrap">
+        <table class="pp-admin-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Title</th>
+                    <th>Type</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in items)
+                {
+                    var captured = item;
+                    <tr>
+                        <td class="pp-admin-td-id">@captured.Id</td>
+                        <td>@captured.Title</td>
+                        <td><span class="pp-type-badge">@captured.TypeLabel</span></td>
+                        <td class="pp-admin-td-actions">
+                            <FluentButton Appearance="Appearance.Outline" @onclick="() => EditItem(captured)">Edit</FluentButton>
+                            <FluentButton Appearance="Appearance.Outline" @onclick="() => DeleteItem(captured.Id)" class="pp-admin-btn-danger">Delete</FluentButton>
+                            <a href="/item/@captured.Id" class="pp-admin-view-link">View</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@code {
+    private IReadOnlyList<PortfolioItem> items = default!;
+    private PortfolioItem? Editing;
+
+    protected override void OnInitialized() => items = PortfolioService.GetAll();
+
+    private void NewItem() => Editing = new PortfolioItem();
+    private void EditItem(PortfolioItem item) => Editing = new PortfolioItem
+    {
+        Id = item.Id, Title = item.Title, Type = item.Type,
+        Image = item.Image, Description = item.Description,
+        Poem = item.Poem, Thoughts = item.Thoughts
+    };
+    private void CancelEdit() => Editing = null;
+
+    private void SaveItem()
+    {
+        if (Editing is null) return;
+        if (Editing.Id == 0)
+            PortfolioService.Add(Editing);
+        else
+            PortfolioService.Update(Editing);
+        Editing = null;
+        items = PortfolioService.GetAll();
+    }
+
+    private void DeleteItem(int id)
+    {
+        PortfolioService.Delete(id);
+        items = PortfolioService.GetAll();
+    }
+}

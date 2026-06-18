@@ -1,0 +1,8 @@
+<Solution>
+  <Project Path="WCG.PaintingPictures.Api.Service/WCG.PaintingPictures.Api.Service.csproj" />
+  <Project Path="WCG.PaintingPictures.Application/WCG.PaintingPictures.Application.csproj" />
+  <Project Path="WCG.PaintingPictures.Domain/WCG.PaintingPictures.Domain.csproj" />
+  <Project Path="WCG.PaintingPictures.Infrastructure/WCG.PaintingPictures.Infrastructure.csproj" />
+  <Project Path="WCG.PaintingPictures.Shared/WCG.PaintingPictures.Shared.csproj" />
+  <Project Path="WCG.PaintingPictures.Web.Server/WCG.PaintingPictures.Web.Server.csproj" />
+</Solution>

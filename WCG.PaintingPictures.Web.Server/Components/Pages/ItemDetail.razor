@@ -1,0 +1,83 @@
+@page "/item/{Id:int}"
+@rendermode InteractiveServer
+@inject PortfolioService PortfolioService
+
+<PageTitle>@(item?.Title ?? "Not Found") — The Irony</PageTitle>
+
+<SiteHeader />
+
+<div class="pp-detail-page">
+    @if (item != null)
+    {
+        <nav class="pp-breadcrumb-wrap" aria-label="Breadcrumb">
+            <FluentBreadcrumb>
+                <FluentBreadcrumbItem Href="/">The Irony</FluentBreadcrumbItem>
+                <FluentBreadcrumbItem Href="/">Works</FluentBreadcrumbItem>
+                <FluentBreadcrumbItem>@item.Title</FluentBreadcrumbItem>
+            </FluentBreadcrumb>
+        </nav>
+
+        <div class="pp-detail-content @(string.IsNullOrEmpty(item.Image) ? "pp-detail-content--poem" : "")">
+            @if (!string.IsNullOrEmpty(item.Image))
+            {
+                <div class="pp-detail-image-col">
+                    <img src="@item.Image" alt="@item.Title" class="pp-detail-img" />
+                </div>
+            }
+            <div class="pp-detail-text-col">
+                <h2 class="pp-detail-title">@item.Title</h2>
+                <FluentBadge class="pp-type-badge pp-badge-top" Appearance="Appearance.Neutral">@item.TypeLabel</FluentBadge>
+
+                @if (!string.IsNullOrEmpty(item.Description) && item.Type != "poem")
+                {
+                    <p class="pp-detail-description">@item.Description</p>
+                }
+
+                @if (!string.IsNullOrEmpty(item.Poem))
+                {
+                    <div class="pp-detail-poem-block">
+                        <h3 class="pp-detail-section-label">The Poem</h3>
+                        <p class="pp-detail-poem">@item.Poem</p>
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(item.Description) && item.Type == "poem")
+                {
+                    <div class="pp-detail-note">
+                        <FluentDivider class="pp-divider" />
+                        <p class="pp-detail-note-text">@item.Description</p>
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(item.Thoughts))
+                {
+                    <div class="pp-detail-thoughts-block">
+                        <FluentDivider class="pp-divider" />
+                        <h3 class="pp-detail-section-label">Thoughts</h3>
+                        <p class="pp-detail-thoughts">@item.Thoughts</p>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="pp-detail-notfound">
+            <p>Item not found.</p>
+        </div>
+    }
+</div>
+
+<footer class="pp-footer">
+    <p>A curatorial collection exploring light, form, and the stories we hold.</p>
+</footer>
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private PortfolioItem? item;
+
+    protected override void OnParametersSet()
+    {
+        item = PortfolioService.GetById(Id);
+    }
+}

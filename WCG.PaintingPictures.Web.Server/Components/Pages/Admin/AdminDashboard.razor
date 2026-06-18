@@ -1,0 +1,25 @@
+@page "/admin"
+@attribute [Authorize(Roles = "admin")]
+@rendermode InteractiveServer
+
+<PageTitle>Admin — The Irony</PageTitle>
+
+<SiteHeader />
+
+<div class="pp-admin-page">
+    <div class="pp-admin-header">
+        <h2 class="pp-admin-title">Admin</h2>
+        <AuthorizeView Roles="admin">
+            <Authorized>
+                <span class="pp-admin-user">@context.User.Identity?.Name</span>
+            </Authorized>
+        </AuthorizeView>
+        <a href="/api/auth/logout" class="pp-admin-logout">Sign out</a>
+    </div>
+
+    <nav class="pp-admin-nav">
+        <a href="/admin/portfolio" class="pp-admin-nav-link">Portfolio items</a>
+        <a href="/admin/users" class="pp-admin-nav-link">Users</a>
+        <a href="/" class="pp-admin-nav-link pp-admin-nav-link--secondary">View site</a>
+    </nav>
+</div>

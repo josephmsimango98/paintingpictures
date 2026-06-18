@@ -1,0 +1,789 @@
+/* ── Reset ── */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+/* Hide all scrollbars */
+* { scrollbar-width: none; -ms-overflow-style: none; }
+*::-webkit-scrollbar { display: none; }
+
+html, body {
+    background-color: #0a0a0a;
+    color: #fff;
+    font-family: 'Georgia', 'Times New Roman', serif !important;
+    font-style: italic !important;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+.portfolio-root {
+    background-color: #0a0a0a;
+    min-height: 100vh;
+}
+
+.portfolio-root * {
+    font-family: 'Georgia', 'Times New Roman', serif;
+    font-style: italic;
+}
+
+/* ── Header ── */
+.pp-header {
+    padding: 32px 20px 28px;
+    border-bottom: 1px solid #1e1e1e;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    position: relative;
+}
+
+.pp-header-row1 {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+}
+.pp-logo {
+    width: 56px;
+    height: 56px;
+    object-fit: contain;
+    filter: invert(1);
+    opacity: 0.85;
+}
+
+.pp-site-title {
+    font-size: 2.4rem !important;
+    font-weight: 300 !important;
+    font-style: italic !important;
+    letter-spacing: 2px;
+    color: #fff !important;
+    line-height: 1.1;
+}
+
+.pp-site-byline {
+    font-size: 0.72rem;
+    font-style: italic !important;
+    font-family: 'Georgia', serif !important;
+    color: #444;
+    letter-spacing: 0.5px;
+}
+
+.pp-site-byline-row {
+    position: absolute;
+    bottom: 10px;
+    right: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.pp-theme-toggle {
+    --neutral-fill-stealth-rest: transparent;
+    --neutral-fill-stealth-hover: transparent;
+    --neutral-fill-stealth-active: transparent;
+    color: #444 !important;
+    min-width: unset !important;
+    padding: 0 !important;
+    transition: color 0.2s ease;
+}
+
+.pp-theme-toggle:hover { color: #aaa !important; }
+
+.pp-site-subtitle {
+    font-size: 1rem;
+    color: #666;
+    font-weight: 300;
+}
+
+/* ── Hero ── */
+.pp-hero {
+    padding: 60px 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 70vh;
+    background: linear-gradient(135deg, #111 0%, #0a0a0a 100%);
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+}
+
+.pp-hero-inner { max-width: 800px; width: 100%; }
+
+.pp-hero-img {
+    width: 100%;
+    height: auto;
+    display: block;
+    object-fit: cover;
+    border: 1px solid #1e1e1e;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.pp-hero:hover .pp-hero-img {
+    transform: scale(1.015);
+    box-shadow: 0 0 48px rgba(255,255,255,0.06);
+}
+
+.pp-hero-caption {
+    text-align: center;
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.pp-hero-label { font-size: 1.2rem; color: #ccc; }
+.pp-hero-hint  { font-size: 0.85rem; color: #555; }
+
+/* ── Gallery ── */
+.pp-gallery-section {
+    padding: 60px 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.pp-section-heading {
+    text-align: center;
+    font-size: 1.8rem !important;
+    font-style: italic !important;
+    margin-bottom: 44px;
+    color: #fff !important;
+    font-weight: 300 !important;
+    letter-spacing: 1px;
+}
+
+.pp-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 20px;
+}
+
+/* ── Card ── */
+.pp-card {
+    position: relative;
+    overflow: hidden;
+    aspect-ratio: 1;
+    border: 1px solid #1e1e1e;
+    cursor: pointer;
+    transition: border-color 0.25s ease;
+    display: block;
+    text-decoration: none;
+    color: inherit;
+}
+
+.pp-card:hover { border-color: #3a3a3a; }
+
+.pp-card-img {
+    width: 100%; height: 100%;
+    object-fit: cover; display: block;
+    transition: transform 0.3s ease, filter 0.3s ease;
+}
+
+.pp-card:hover .pp-card-img {
+    transform: scale(1.05);
+    filter: brightness(1.08);
+}
+
+.pp-card-poem-thumb {
+    width: 100%; height: 100%;
+    background: #0d0d0d;
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+}
+
+.pp-card-poem-excerpt {
+    font-size: 0.95rem; color: #555;
+    text-align: center; line-height: 1.8;
+}
+
+.pp-card-overlay {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.76);
+    display: flex; flex-direction: column;
+    justify-content: space-between;
+    padding: 18px;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+    pointer-events: none;
+}
+
+.pp-card:hover .pp-card-overlay { opacity: 1; }
+
+.pp-card-title {
+    font-size: 1.1rem !important;
+    font-style: italic !important;
+    color: #fff !important;
+    font-weight: 300 !important;
+}
+
+/* ── Type Badge (amber, uppercase, non-italic) ── */
+.pp-type-badge {
+    font-size: 0.65rem !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1.8px !important;
+    font-weight: 400 !important;
+    font-style: normal !important;
+    color: #b89a5e !important;
+    font-family: 'Georgia', serif !important;
+}
+
+/* ── Fluent component resets ── */
+
+/* FluentBadge — strip pill background, show as plain amber label */
+fluent-badge {
+    --badge-fill-primary: transparent !important;
+    --badge-fill-neutral: transparent !important;
+    --badge-color-primary: #b89a5e !important;
+    --badge-color-neutral: #b89a5e !important;
+    background: transparent !important;
+    color: #b89a5e !important;
+    border: none !important;
+    padding: 0 !important;
+    font-size: 0.65rem !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1.8px !important;
+    font-weight: 400 !important;
+    font-style: normal !important;
+    font-family: 'Georgia', serif !important;
+}
+
+/* FluentDivider — match the dark hairline */
+fluent-divider {
+    --divider-color: #222 !important;
+    margin: 24px 0 !important;
+}
+
+/* type badge in detail col */
+.pp-badge-top {
+    display: inline-block;
+    margin-bottom: 18px;
+}
+
+/* ── Detail page ── */
+.pp-detail-page {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 0 24px 60px;
+}
+
+/* ── Breadcrumb ── */
+.pp-breadcrumb-wrap {
+    padding: 28px 0 32px;
+}
+
+fluent-breadcrumb {
+    font-style: normal !important;
+    letter-spacing: 0.5px;
+}
+
+fluent-breadcrumb-item a,
+fluent-breadcrumb-item::part(link) {
+    color: #666 !important;
+    text-decoration: none !important;
+    font-size: 0.75rem !important;
+    font-style: italic !important;
+    font-family: 'Georgia', serif !important;
+    transition: color 0.2s ease;
+}
+
+fluent-breadcrumb-item a:hover,
+fluent-breadcrumb-item::part(link):hover {
+    color: #b89a5e !important;
+}
+
+fluent-breadcrumb-item:last-child {
+    font-size: 0.75rem !important;
+    color: #888 !important;
+    font-style: italic !important;
+    font-family: 'Georgia', serif !important;
+}
+
+fluent-breadcrumb-item::part(separator) {
+    color: #333 !important;
+    margin: 0 6px;
+}
+
+/* ── Detail content layout ── */
+.pp-detail-content {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 36px;
+    padding-top: 4px;
+}
+
+.pp-detail-content--poem {
+    grid-template-columns: 1fr;
+}
+
+.pp-detail-image-col {
+    display: flex; flex-direction: column; gap: 14px;
+}
+
+.pp-detail-img {
+    width: 100%; height: auto; display: block;
+    border: 1px solid #1e1e1e;
+}
+
+.pp-detail-text-col {
+    display: flex; flex-direction: column;
+}
+
+.pp-detail-title {
+    font-size: 2.6rem !important;
+    font-weight: 400 !important;
+    font-style: italic !important;
+    line-height: 1.15;
+    color: #fff !important;
+    margin: 0 0 20px 0;
+    font-family: 'Georgia', serif !important;
+}
+
+.pp-detail-description {
+    color: #bbb !important;
+    line-height: 1.85;
+    font-size: 0.97rem;
+    margin-bottom: 26px;
+    font-style: italic !important;
+}
+
+.pp-detail-section-label {
+    font-size: 0.68rem !important;
+    color: #b89a5e !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1.8px !important;
+    margin-bottom: 18px;
+    font-weight: 400 !important;
+    font-style: italic !important;
+    display: block;
+    font-family: 'Georgia', serif !important;
+}
+
+.pp-detail-poem-block {
+    margin-bottom: 0;
+}
+
+.pp-detail-poem {
+    color: #f0f0f0 !important;
+    line-height: 2.05;
+    font-size: 1.05rem;
+    white-space: pre-wrap;
+    font-style: italic !important;
+    font-family: 'Georgia', serif !important;
+}
+
+.pp-detail-note {
+    margin-top: 28px;
+    padding-top: 28px;
+    border-top: 1px solid #222;
+}
+
+.pp-detail-note-text {
+    color: #666 !important;
+    line-height: 1.8;
+    font-size: 0.88rem;
+    font-style: italic !important;
+}
+
+.pp-detail-thoughts-block {
+    margin-top: 24px;
+    padding-top: 24px;
+    border-top: 1px solid #222;
+}
+
+.pp-detail-thoughts {
+    color: #999 !important;
+    line-height: 1.8;
+    font-size: 0.92rem;
+}
+
+.pp-detail-notfound {
+    padding: 80px 0;
+    text-align: center;
+    color: #555;
+    font-style: italic;
+}
+
+/* ── Footer ── */
+.pp-footer {
+    text-align: center;
+    padding: 36px 20px;
+    border-top: 1px solid #1a1a1a;
+    color: #444;
+    font-size: 0.9rem;
+    margin-top: 60px;
+}
+
+/* ── Blazor error UI ── */
+#blazor-error-ui {
+    background: #b32121;
+    bottom: 0; left: 0;
+    color: #fff;
+    display: none;
+    padding: 0.6rem 1.25rem 0.7rem;
+    position: fixed;
+    width: 100%;
+    z-index: 9999;
+}
+
+#blazor-error-ui .dismiss {
+    cursor: pointer;
+    position: absolute;
+    right: 0.75rem;
+    top: 0.5rem;
+}
+
+/* ── Responsive ── */
+@media (max-width: 600px) {
+    .pp-site-title { font-size: 1.7rem !important; }
+    .pp-hero { min-height: 50vh; padding: 36px 16px; }
+    .pp-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .pp-gallery-section { padding: 40px 16px; }
+    .pp-detail-page { padding: 0 16px 40px; }
+    .pp-detail-title { font-size: 1.8rem !important; }
+}
+
+/* ── Light theme ── */
+html.pp-light,
+html.pp-light body {
+    background-color: #f5f2ee !important;
+    color: #1a1a1a !important;
+}
+
+html.pp-light .portfolio-root { background-color: #f5f2ee; }
+html.pp-light .pp-header { border-bottom-color: #d8d0c4; }
+html.pp-light .pp-site-title { color: #1a1a1a !important; }
+html.pp-light .pp-site-subtitle { color: #666; }
+html.pp-light .pp-site-byline { color: #aaa; }
+html.pp-light .pp-theme-toggle { color: #aaa !important; }
+html.pp-light .pp-theme-toggle:hover { color: #444 !important; }
+
+html.pp-light .pp-hero {
+    background: linear-gradient(135deg, #ede8e1 0%, #f5f2ee 100%);
+}
+html.pp-light .pp-hero-img { border-color: #d8d0c4; }
+html.pp-light .pp-hero-label { color: #444; }
+html.pp-light .pp-hero-hint  { color: #999; }
+
+html.pp-light .pp-section-heading { color: #1a1a1a !important; }
+
+html.pp-light .pp-card { border-color: #d8d0c4; background: #ede8e1; }
+html.pp-light .pp-card:hover { border-color: #b0a090; }
+html.pp-light .pp-card-poem-thumb { background: #e8e2d8; }
+html.pp-light .pp-card-poem-excerpt { color: #999; }
+html.pp-light .pp-card-overlay { background: rgba(245,242,238,0.82); }
+html.pp-light .pp-card-title { color: #1a1a1a !important; }
+
+html.pp-light fluent-divider    { --divider-color: #d8d0c4 !important; }
+
+html.pp-light .pp-detail-title       { color: #1a1a1a !important; }
+html.pp-light .pp-detail-img         { border-color: #d8d0c4; }
+html.pp-light .pp-detail-description { color: #444 !important; }
+html.pp-light .pp-detail-poem        { color: #1a1a1a !important; }
+html.pp-light .pp-detail-note-text   { color: #888 !important; }
+html.pp-light .pp-detail-thoughts    { color: #666 !important; }
+html.pp-light .pp-detail-note        { border-top-color: #d8d0c4; }
+html.pp-light .pp-detail-thoughts-block { border-top-color: #d8d0c4; }
+
+html.pp-light fluent-breadcrumb-item a,
+html.pp-light fluent-breadcrumb-item::part(link) { color: #999 !important; }
+html.pp-light fluent-breadcrumb-item:last-child   { color: #777 !important; }
+html.pp-light fluent-breadcrumb-item::part(separator) { color: #bbb !important; }
+
+html.pp-light .pp-footer {
+    border-top-color: #d8d0c4;
+    color: #aaa;
+}
+
+html.pp-light .pp-logo { filter: none; }
+
+/* ── Login page ── */
+.pp-login-page {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 70vh;
+    padding: 40px 20px;
+}
+
+.pp-login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+    max-width: 380px;
+    background: #0f0f0f;
+    border: 1px solid #1e1e1e;
+    padding: 40px;
+}
+
+.pp-login-title {
+    font-size: 1.6rem !important;
+    font-weight: 400 !important;
+    font-style: italic !important;
+    color: #fff !important;
+    margin-bottom: 8px;
+    font-family: 'Georgia', serif !important;
+}
+
+.pp-login-input {
+    background: #0a0a0a;
+    border: 1px solid #2a2a2a;
+    color: #fff;
+    padding: 10px 14px;
+    font-size: 0.9rem;
+    font-family: 'Georgia', serif;
+    font-style: italic;
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+
+.pp-login-input:focus { border-color: #555; }
+
+.pp-login-btn {
+    margin-top: 4px;
+    font-family: 'Georgia', serif !important;
+    font-style: normal !important;
+}
+
+.pp-login-error {
+    font-size: 0.82rem;
+    color: #c0392b;
+    font-style: italic;
+}
+
+/* ── Admin pages ── */
+.pp-admin-page {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 40px 24px 60px;
+}
+
+.pp-admin-header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 36px;
+    border-bottom: 1px solid #1e1e1e;
+    padding-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.pp-admin-title {
+    font-size: 1.8rem !important;
+    font-style: italic !important;
+    font-weight: 300 !important;
+    color: #fff !important;
+    flex: 1;
+}
+
+.pp-admin-user {
+    font-size: 0.8rem;
+    color: #555;
+    font-style: italic;
+}
+
+.pp-admin-logout {
+    font-size: 0.75rem;
+    color: #555;
+    text-decoration: none;
+    font-style: italic;
+    transition: color 0.2s ease;
+}
+.pp-admin-logout:hover { color: #b89a5e; }
+
+.pp-admin-back {
+    font-size: 0.78rem;
+    color: #555;
+    text-decoration: none;
+    font-style: italic;
+    transition: color 0.2s ease;
+    margin-left: auto;
+}
+.pp-admin-back:hover { color: #aaa; }
+
+.pp-admin-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-left: auto;
+}
+
+/* Admin nav */
+.pp-admin-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.pp-admin-nav-link {
+    display: block;
+    padding: 14px 20px;
+    border: 1px solid #1e1e1e;
+    color: #ccc;
+    text-decoration: none;
+    font-style: italic;
+    font-size: 1rem;
+    transition: border-color 0.2s, color 0.2s;
+}
+.pp-admin-nav-link:hover { border-color: #3a3a3a; color: #fff; }
+.pp-admin-nav-link--secondary { color: #555; }
+
+/* Admin table */
+.pp-admin-table-wrap {
+    overflow-x: auto;
+    margin-top: 8px;
+}
+
+.pp-admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+    font-style: italic;
+}
+
+.pp-admin-table th {
+    text-align: left;
+    padding: 10px 14px;
+    border-bottom: 1px solid #2a2a2a;
+    color: #555;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 1.4px;
+    font-style: normal;
+    font-weight: 400;
+}
+
+.pp-admin-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid #181818;
+    color: #ccc;
+    vertical-align: middle;
+}
+
+.pp-admin-td-id { color: #444; width: 48px; }
+.pp-admin-td-actions { display: flex; gap: 8px; align-items: center; }
+
+.pp-admin-btn-danger { color: #c0392b !important; border-color: #3a1a1a !important; }
+.pp-admin-btn-danger:hover { border-color: #c0392b !important; }
+
+.pp-admin-view-link {
+    font-size: 0.72rem;
+    color: #555;
+    text-decoration: none;
+    font-style: italic;
+    transition: color 0.2s;
+}
+.pp-admin-view-link:hover { color: #b89a5e; }
+
+/* Admin form */
+.pp-admin-form-wrap {
+    margin-bottom: 36px;
+    border: 1px solid #1e1e1e;
+    padding: 28px 32px;
+    background: #0a0a0a;
+}
+
+.pp-admin-form-title {
+    font-size: 1.1rem !important;
+    font-style: italic !important;
+    font-weight: 300 !important;
+    color: #fff !important;
+    margin-bottom: 24px;
+}
+
+.pp-admin-form {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 12px 20px;
+    align-items: start;
+}
+
+.pp-admin-label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: #555;
+    font-style: normal;
+    padding-top: 10px;
+}
+
+.pp-admin-input {
+    background: #111;
+    border: 1px solid #2a2a2a;
+    color: #fff;
+    padding: 9px 12px;
+    font-size: 0.88rem;
+    font-family: 'Georgia', serif;
+    font-style: italic;
+    outline: none;
+    width: 100%;
+    transition: border-color 0.2s;
+}
+.pp-admin-input:focus { border-color: #555; }
+
+.pp-admin-textarea { min-height: 80px; resize: vertical; }
+
+.pp-admin-form-actions {
+    grid-column: 2;
+    display: flex;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+/* Admin placeholder card */
+.pp-admin-placeholder {
+    border: 1px solid #1e1e1e;
+    padding: 40px;
+    text-align: center;
+}
+
+.pp-admin-placeholder-title {
+    font-size: 1rem;
+    color: #888;
+    font-style: italic;
+    margin-bottom: 12px;
+}
+
+.pp-admin-placeholder-body {
+    font-size: 0.88rem;
+    color: #555;
+    line-height: 1.8;
+    font-style: italic;
+}
+
+.pp-admin-placeholder-body code {
+    background: #111;
+    padding: 1px 6px;
+    font-style: normal;
+    font-size: 0.82rem;
+    color: #b89a5e;
+}
+
+/* Unauthorized state */
+.pp-unauthorized {
+    text-align: center;
+    padding: 80px 20px;
+    color: #555;
+    font-style: italic;
+}
+.pp-unauthorized a { color: #b89a5e; text-decoration: none; }
+
+/* ── Light theme: login + admin ── */
+html.pp-light .pp-login-form { background: #ede8e1; border-color: #d8d0c4; }
+html.pp-light .pp-login-title { color: #1a1a1a !important; }
+html.pp-light .pp-login-input { background: #f5f2ee; border-color: #c8bfb4; color: #1a1a1a; }
+html.pp-light .pp-login-input:focus { border-color: #888; }
+
+html.pp-light .pp-admin-header { border-bottom-color: #d8d0c4; }
+html.pp-light .pp-admin-title { color: #1a1a1a !important; }
+html.pp-light .pp-admin-nav-link { border-color: #d8d0c4; color: #444; }
+html.pp-light .pp-admin-nav-link:hover { border-color: #b0a090; color: #1a1a1a; }
+html.pp-light .pp-admin-table th { border-color: #d8d0c4; }
+html.pp-light .pp-admin-table td { border-color: #e8e2d8; color: #444; }
+html.pp-light .pp-admin-form-wrap { background: #ede8e1; border-color: #d8d0c4; }
+html.pp-light .pp-admin-form-title { color: #1a1a1a !important; }
+html.pp-light .pp-admin-input { background: #f5f2ee; border-color: #c8bfb4; color: #1a1a1a; }
+html.pp-light .pp-admin-placeholder { border-color: #d8d0c4; }

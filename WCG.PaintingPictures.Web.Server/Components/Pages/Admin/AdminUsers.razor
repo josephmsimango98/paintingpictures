@@ -1,0 +1,35 @@
+@page "/admin/users"
+@attribute [Authorize(Roles = "admin")]
+@rendermode InteractiveServer
+@inject IConfiguration Config
+
+<PageTitle>Users — Admin</PageTitle>
+
+<SiteHeader />
+
+<div class="pp-admin-page">
+    <div class="pp-admin-header">
+        <h2 class="pp-admin-title">Users</h2>
+        <a href="/admin" class="pp-admin-back">← Dashboard</a>
+    </div>
+
+    @if (string.IsNullOrEmpty(Config["Supabase:Url"]))
+    {
+        <div class="pp-admin-placeholder">
+            <p class="pp-admin-placeholder-title">Supabase not configured</p>
+            <p class="pp-admin-placeholder-body">
+                User management requires a connected Supabase project.
+                Set <code>Supabase:Url</code>, <code>Supabase:AnonKey</code>, and
+                <code>Supabase:AdminEmail</code> in <code>appsettings.json</code> to enable this feature.
+            </p>
+        </div>
+    }
+    else
+    {
+        <div class="pp-admin-placeholder">
+            <p class="pp-admin-placeholder-body">
+                User management via Supabase Admin API (service role key required) — coming soon.
+            </p>
+        </div>
+    }
+</div>

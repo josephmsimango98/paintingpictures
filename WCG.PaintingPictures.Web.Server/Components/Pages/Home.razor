@@ -1,0 +1,59 @@
+@page "/"
+@rendermode InteractiveServer
+@inject PortfolioService PortfolioService
+
+<PageTitle>The Irony</PageTitle>
+
+<SiteHeader />
+
+<!-- Hero -->
+<a href="/item/@items[0].Id" class="pp-hero">
+    <div class="pp-hero-inner">
+        <img src="@items[0].Image" alt="@items[0].Title" class="pp-hero-img" />
+        <div class="pp-hero-caption">
+            <span class="pp-hero-label">Featured: @items[0].Title</span>
+            <span class="pp-hero-hint">Click to read the full story</span>
+        </div>
+    </div>
+</a>
+
+<!-- Gallery -->
+<section class="pp-gallery-section">
+    <h2 class="pp-section-heading">Works</h2>
+    <div class="pp-grid">
+        @foreach (var item in items)
+        {
+            var captured = item;
+            <a href="/item/@captured.Id" class="pp-card">
+                @if (!string.IsNullOrEmpty(captured.Image))
+                {
+                    <img src="@captured.Image" alt="@captured.Title" class="pp-card-img" />
+                }
+                else
+                {
+                    <div class="pp-card-poem-thumb">
+                        <span class="pp-card-poem-excerpt">@(captured.Poem?.Split('\n')[0])</span>
+                    </div>
+                }
+                <div class="pp-card-overlay">
+                    <span class="pp-type-badge">@captured.TypeLabel</span>
+                    <h3 class="pp-card-title">@captured.Title</h3>
+                </div>
+            </a>
+        }
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="pp-footer">
+    <p>A curatorial collection exploring light, form, and the stories we hold.</p>
+</footer>
+
+@code {
+    private IReadOnlyList<PortfolioItem> items = default!;
+
+    protected override void OnInitialized()
+    {
+        items = PortfolioService.GetAll();
+    }
+}

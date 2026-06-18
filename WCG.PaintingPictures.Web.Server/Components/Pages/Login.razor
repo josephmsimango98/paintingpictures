@@ -1,0 +1,31 @@
+@page "/login"
+@attribute [AllowAnonymous]
+@rendermode InteractiveServer
+
+<PageTitle>Sign in — The Irony</PageTitle>
+
+<SiteHeader />
+
+<div class="pp-login-page">
+    <form method="post" action="/api/auth/login" class="pp-login-form">
+        <AntiforgeryToken />
+        <h2 class="pp-login-title">Sign in</h2>
+        @if (Error == "invalid")
+        {
+            <p class="pp-login-error">Invalid email or password.</p>
+        }
+        else if (Error == "notconfigured")
+        {
+            <p class="pp-login-error">Authentication service is not configured.</p>
+        }
+        <input type="email" name="email" placeholder="Email" class="pp-login-input" required autocomplete="email" />
+        <input type="password" name="password" placeholder="Password" class="pp-login-input" required autocomplete="current-password" />
+        <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent" class="pp-login-btn">
+            Sign in
+        </FluentButton>
+    </form>
+</div>
+
+@code {
+    [SupplyParameterFromQuery] private string? Error { get; set; }
+}
