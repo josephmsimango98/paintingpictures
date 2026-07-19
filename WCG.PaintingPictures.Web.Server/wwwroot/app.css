@@ -316,7 +316,7 @@ html.pp-light .pp-site-brand__logo { filter: none; }
 .pp-site-brand__medium {
     color: var(--pp-text-muted);
     text-decoration: none;
-    border-bottom: 1px solid transparent;
+    border-bottom: none;
     padding-bottom: 1px;
     cursor: pointer;
     transition: color var(--ease-ui), border-color var(--ease-ui);
@@ -328,7 +328,6 @@ html.pp-light .pp-site-brand__logo { filter: none; }
 
 .pp-site-brand__medium.is-active {
     color: var(--pp-accent);
-    border-bottom-color: var(--pp-accent);
 }
 
 .pp-site-brand__sep {

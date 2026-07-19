@@ -8,6 +8,9 @@
 <SiteHeader />
 
 <section class="pp-works">
+    <div class="pp-studio-page-actions">
+        <StudioEditLink Href="@CollectionsEditHref" Label="Edit collections" />
+    </div>
     <div class="pp-works__intro">
         <h1 class="pp-works__title">@PortfolioMedia.PluralLabel(medium)</h1>
         <p class="pp-works__subtitle">Browse collections and works in this medium.</p>
@@ -136,6 +139,10 @@
     private string pageTitle = "Works";
     private string selectedCollectionTitle = "All";
     private string? selectedCollectionDescription;
+    private string WorksReturnUrl =>
+        $"/works?type={Uri.EscapeDataString(medium)}&collection={Uri.EscapeDataString(selectedSlug)}";
+    private string CollectionsEditHref =>
+        $"/admin/collections?medium={Uri.EscapeDataString(medium)}&returnUrl={Uri.EscapeDataString(WorksReturnUrl)}";
 
     protected override async Task OnParametersSetAsync()
     {

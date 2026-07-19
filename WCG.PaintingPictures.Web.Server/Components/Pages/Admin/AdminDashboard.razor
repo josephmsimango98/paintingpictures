@@ -1,27 +1,18 @@
 @page "/admin"
 @attribute [Authorize(Roles = "admin")]
 @rendermode InteractiveServer
+@inject NavigationManager Navigation
 
-<PageTitle>Admin — The Irony</PageTitle>
+<PageTitle>Studio — The Irony</PageTitle>
 
-<SiteHeader />
+<p class="pp-admin-redirect">Opening the live site…</p>
 
-<div class="pp-admin-page">
-    <div class="pp-admin-header">
-        <h2 class="pp-admin-title">Studio</h2>
-        <AuthorizeView Roles="admin">
-            <Authorized>
-                <span class="pp-admin-user">@context.User.Identity?.Name</span>
-            </Authorized>
-        </AuthorizeView>
-        <a href="/api/auth/logout" class="pp-admin-logout">Sign out</a>
-    </div>
-
-    <nav class="pp-admin-nav">
-        <a href="/admin/portfolio" class="pp-admin-nav-link">Portfolio items</a>
-        <a href="/admin/collections" class="pp-admin-nav-link">Collections</a>
-        <a href="/admin/hero" class="pp-admin-nav-link">Hero gallery</a>
-        <a href="/admin/users" class="pp-admin-nav-link">Users</a>
-        <a href="/" class="pp-admin-nav-link pp-admin-nav-link--secondary">View site</a>
-    </nav>
-</div>
+@code {
+    protected override void OnInitialized()
+    {
+        Navigation.NavigateTo("/", new NavigationOptions
+        {
+            ReplaceHistoryEntry = true
+        });
+    }
+}

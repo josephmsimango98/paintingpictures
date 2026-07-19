@@ -95,7 +95,7 @@ app.MapPost("/api/auth/login", async (
         await ctx.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme,
             new ClaimsPrincipal(identity));
 
-        return Results.Redirect(role == "admin" ? "/admin" : "/");
+        return Results.Redirect("/");
     }
     catch
     {

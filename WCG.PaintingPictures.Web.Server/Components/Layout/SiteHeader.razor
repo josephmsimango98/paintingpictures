@@ -110,7 +110,8 @@
                 <a href="/" @onclick="CloseMenu">Home</a>
                 <AuthorizeView Roles="admin">
                     <Authorized>
-                        <a href="/admin" class="pp-drawer__studio" @onclick="CloseMenu">Go to studio</a>
+                        <a href="/" class="pp-drawer__studio" @onclick="CloseMenu">Studio home</a>
+                        <a href="/admin/users" @onclick="CloseMenu">Manage users</a>
                     </Authorized>
                 </AuthorizeView>
                 <a href="/works" @onclick="CloseMenu">Collections</a>
