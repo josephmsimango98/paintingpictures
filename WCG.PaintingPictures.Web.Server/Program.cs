@@ -13,6 +13,7 @@ builder.Services.AddFluentUIComponents();
 builder.Services.AddSingleton<SupabaseDataService>();
 builder.Services.AddSingleton<PortfolioService>();
 builder.Services.AddSingleton<HeroGalleryService>();
+builder.Services.AddSingleton<CollectionService>();
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>

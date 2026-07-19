@@ -1,0 +1,336 @@
+@page "/admin/collections"
+@attribute [Authorize(Roles = "admin")]
+@rendermode InteractiveServer
+@inject CollectionService CollectionService
+@inject PortfolioService PortfolioService
+
+<PageTitle>Collections — Admin</PageTitle>
+
+<SiteHeader />
+
+<div class="pp-admin-page">
+    <div class="pp-admin-header">
+        <h1 class="pp-admin-title">Collections</h1>
+        <div class="pp-admin-header-actions">
+            <button type="button" class="pp-btn pp-btn--accent" @onclick="NewCollection" disabled="@isBusy">
+                New collection
+            </button>
+            <a href="/admin" class="pp-admin-back">← Dashboard</a>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(statusMessage))
+    {
+        <p class="@(statusIsError ? "pp-admin-status pp-admin-status--error" : "pp-admin-status")">
+            @statusMessage
+        </p>
+    }
+
+    @if (Editing is not null)
+    {
+        <section class="pp-admin-form-wrap">
+            <h2 class="pp-admin-form-title">@(Editing.Id == 0 ? "New collection" : "Edit collection")</h2>
+
+            <div class="pp-admin-form">
+                <fieldset class="pp-admin-fieldset">
+                    <legend class="pp-admin-fieldset__legend">Details</legend>
+
+                    <div class="pp-admin-field-row">
+                        <div class="pp-admin-field">
+                            <label class="pp-admin-label" for="collection-title">Title</label>
+                            <input id="collection-title"
+                                   class="pp-admin-input"
+                                   @bind="Editing.Title"
+                                   placeholder="Morning Light" />
+                        </div>
+
+                        <div class="pp-admin-field">
+                            <label class="pp-admin-label" for="collection-medium">Medium</label>
+                            <select id="collection-medium"
+                                    class="pp-admin-input"
+                                    value="@Editing.Medium"
+                                    @onchange="ChangeMedium">
+                                <option value="photograph">Photographs</option>
+                                <option value="drawing">Drawings</option>
+                                <option value="poem">Poems</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="pp-admin-field">
+                        <label class="pp-admin-label" for="collection-description">Description</label>
+                        <textarea id="collection-description"
+                                  class="pp-admin-input pp-admin-textarea"
+                                  @bind="Editing.Description"
+                                  placeholder="A short curatorial note"></textarea>
+                    </div>
+                </fieldset>
+
+                <fieldset class="pp-admin-fieldset">
+                    <legend class="pp-admin-fieldset__legend">
+                        Select @PortfolioMedia.PluralLabel(Editing.Medium)
+                    </legend>
+
+                    @if (EligibleItems.Count == 0)
+                    {
+                        <p class="pp-admin-placeholder-body">
+                            No @PortfolioMedia.PluralLabel(Editing.Medium).ToLowerInvariant() are available yet.
+                        </p>
+                    }
+                    else
+                    {
+                        <div class="pp-collection-picker">
+                            @foreach (var item in EligibleItems)
+                            {
+                                <label class="pp-collection-picker__item @(selectedIds.Contains(item.Id) ? "is-selected" : "")">
+                                    <input type="checkbox"
+                                           checked="@selectedIds.Contains(item.Id)"
+                                           @onchange="e => ToggleItem(item.Id, e.Value is true)" />
+                                    @if (item.HasImage)
+                                    {
+                                        <img src="@item.Image" alt="" />
+                                    }
+                                    else
+                                    {
+                                        <span class="pp-collection-picker__poem" aria-hidden="true">“</span>
+                                    }
+                                    <span>
+                                        <strong>@item.Title</strong>
+                                        <small>@item.TypeLabel</small>
+                                    </span>
+                                </label>
+                            }
+                        </div>
+                    }
+
+                    @if (selectedIds.Count > 0)
+                    {
+                        <div class="pp-admin-field">
+                            <label class="pp-admin-label" for="collection-cover">Cover work</label>
+                            <select id="collection-cover" class="pp-admin-input" @bind="Editing.CoverItemId">
+                                @foreach (var item in EligibleItems.Where(x => selectedIds.Contains(x.Id)))
+                                {
+                                    <option value="@item.Id">@item.Title</option>
+                                }
+                            </select>
+                        </div>
+                    }
+                </fieldset>
+
+                <div class="pp-admin-form-actions">
+                    <button type="button" class="pp-btn pp-btn--accent" @onclick="Save" disabled="@isBusy">Save</button>
+                    <button type="button" class="pp-btn" @onclick="Cancel" disabled="@isBusy">Cancel</button>
+                </div>
+            </div>
+        </section>
+    }
+
+    @if (isLoading)
+    {
+        <p class="pp-admin-placeholder-body">Loading collections…</p>
+    }
+    else if (collections.Count == 0)
+    {
+        <div class="pp-admin-placeholder">
+            <p class="pp-admin-placeholder-title">No custom collections yet</p>
+            <p class="pp-admin-placeholder-body">
+                “All Photographs”, “All Drawings”, and “All Poems” are created automatically on the public page.
+            </p>
+        </div>
+    }
+    else
+    {
+        <div class="pp-admin-table-wrap">
+            <table class="pp-admin-table">
+                <thead>
+                    <tr>
+                        <th>Cover</th>
+                        <th>Collection</th>
+                        <th>Medium</th>
+                        <th>Works</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var collection in collections)
+                    {
+                        var captured = collection;
+                        <tr>
+                            <td class="pp-admin-td-thumb">
+                                @if (captured.CoverItem?.HasImage == true)
+                                {
+                                    <img src="@captured.CoverItem.Image" alt="" class="pp-admin-thumb" />
+                                }
+                                else
+                                {
+                                    <span class="pp-admin-thumb pp-admin-thumb--empty">—</span>
+                                }
+                            </td>
+                            <td class="pp-admin-td-title">@captured.Title</td>
+                            <td>@PortfolioMedia.PluralLabel(captured.Medium)</td>
+                            <td>@captured.ItemCount</td>
+                            <td class="pp-admin-td-actions">
+                                <button type="button" class="pp-btn pp-btn--sm" @onclick="() => Edit(captured)">Edit</button>
+                                <button type="button"
+                                        class="pp-btn pp-btn--sm pp-btn--danger"
+                                        @onclick="() => Delete(captured.Id)">
+                                    Delete
+                                </button>
+                                <a class="pp-admin-view-link"
+                                   href="/works?type=@captured.Medium&collection=@captured.Slug">
+                                    View
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@code {
+    private IReadOnlyList<PortfolioCollection> collections = [];
+    private IReadOnlyList<PortfolioItem> items = [];
+    private readonly HashSet<int> selectedIds = [];
+    private PortfolioCollection? Editing;
+    private bool isLoading = true;
+    private bool isBusy;
+    private string? statusMessage;
+    private bool statusIsError;
+
+    private IReadOnlyList<PortfolioItem> EligibleItems =>
+        Editing is null
+            ? []
+            : items
+                .Where(x => x.Type.Equals(Editing.Medium, StringComparison.OrdinalIgnoreCase))
+                .OrderBy(x => x.Title)
+                .ToList();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            items = await PortfolioService.LoadAsync();
+            collections = await CollectionService.LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            SetStatus($"Could not load collections: {ex.Message}", true);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void NewCollection()
+    {
+        selectedIds.Clear();
+        Editing = new PortfolioCollection
+        {
+            Medium = PortfolioMedia.Photograph,
+            SortOrder = collections.Count
+        };
+        statusMessage = null;
+    }
+
+    private void Edit(PortfolioCollection collection)
+    {
+        Editing = new PortfolioCollection
+        {
+            Id = collection.Id,
+            Title = collection.Title,
+            Slug = collection.Slug,
+            Medium = collection.Medium,
+            Description = collection.Description,
+            CoverItemId = collection.CoverItemId,
+            SortOrder = collection.SortOrder,
+            CreatedAt = collection.CreatedAt,
+            ItemIds = collection.ItemIds.ToList()
+        };
+
+        selectedIds.Clear();
+        selectedIds.UnionWith(collection.ItemIds);
+        statusMessage = null;
+    }
+
+    private void ChangeMedium(ChangeEventArgs args)
+    {
+        if (Editing is null)
+            return;
+
+        Editing.Medium = PortfolioMedia.Normalize(args.Value?.ToString());
+        selectedIds.Clear();
+        Editing.CoverItemId = null;
+    }
+
+    private void ToggleItem(int itemId, bool selected)
+    {
+        if (selected)
+            selectedIds.Add(itemId);
+        else
+            selectedIds.Remove(itemId);
+
+        if (Editing is null)
+            return;
+
+        if (Editing.CoverItemId is null || !selectedIds.Contains(Editing.CoverItemId.Value))
+            Editing.CoverItemId = selectedIds.FirstOrDefault() is var first && first > 0 ? first : null;
+    }
+
+    private async Task Save()
+    {
+        if (Editing is null)
+            return;
+
+        isBusy = true;
+        try
+        {
+            await CollectionService.SaveAsync(Editing, selectedIds.ToList());
+            collections = await CollectionService.LoadAsync();
+            Editing = null;
+            selectedIds.Clear();
+            SetStatus("Collection saved.", false);
+        }
+        catch (Exception ex)
+        {
+            SetStatus($"Save failed: {ex.Message}", true);
+        }
+        finally
+        {
+            isBusy = false;
+        }
+    }
+
+    private async Task Delete(long id)
+    {
+        isBusy = true;
+        try
+        {
+            await CollectionService.DeleteAsync(id);
+            collections = await CollectionService.LoadAsync();
+            SetStatus("Collection deleted.", false);
+        }
+        catch (Exception ex)
+        {
+            SetStatus($"Delete failed: {ex.Message}", true);
+        }
+        finally
+        {
+            isBusy = false;
+        }
+    }
+
+    private void Cancel()
+    {
+        Editing = null;
+        selectedIds.Clear();
+    }
+
+    private void SetStatus(string message, bool isError)
+    {
+        statusMessage = message;
+        statusIsError = isError;
+    }
+}

@@ -3,6 +3,7 @@ bin/
 obj/
 out/
 _buildcheck/
+_buildcheck*/
 *.user
 *.suo
 *.userosscache

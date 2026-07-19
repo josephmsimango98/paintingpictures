@@ -1,5 +1,6 @@
 @inject IJSRuntime JS
 @inject NavigationManager Navigation
+@implements IDisposable
 
 <header class="pp-site-header">
     <div class="pp-site-header__inner">
@@ -14,24 +15,33 @@
                 </svg>
             </button>
 
-            <a href="/" class="pp-site-brand">
-                <img src="images/mimic-logo.png" alt="" class="pp-site-brand__logo" />
-                <span class="pp-site-brand__copy">
-                    <span class="pp-site-brand__title">The Irony</span>
-                    <span class="pp-site-brand__tagline">Photographs · Drawings · Poems</span>
-                </span>
-            </a>
+            <div class="pp-site-brand">
+                <a href="/" class="pp-site-brand__mark" aria-label="The Irony home">
+                    <img src="images/mimic-logo.png" alt="" class="pp-site-brand__logo" />
+                </a>
+                <div class="pp-site-brand__copy">
+                    <a href="/" class="pp-site-brand__title">The Irony</a>
+                    <nav class="pp-site-brand__tagline" aria-label="Categories">
+                        <a href="/works?type=photograph&collection=all"
+                           class="pp-site-brand__medium @(IsMediumActive("photograph") ? "is-active" : null)">
+                            Photographs
+                        </a>
+                        <span class="pp-site-brand__sep" aria-hidden="true">·</span>
+                        <a href="/works?type=drawing&collection=all"
+                           class="pp-site-brand__medium @(IsMediumActive("drawing") ? "is-active" : null)">
+                            Drawings
+                        </a>
+                        <span class="pp-site-brand__sep" aria-hidden="true">·</span>
+                        <a href="/works?type=poem&collection=all"
+                           class="pp-site-brand__medium @(IsMediumActive("poem") ? "is-active" : null)">
+                            Poems
+                        </a>
+                    </nav>
+                </div>
+            </div>
         </div>
 
         <div class="pp-site-header__right">
-            <nav class="pp-site-nav" aria-label="Primary">
-                <a href="/works" class="pp-site-nav__link @(IsActive("/works") ? "is-active" : null)">Collections</a>
-                <a href="/about" class="pp-site-nav__link @(IsActive("/about") ? "is-active" : null)">About</a>
-                <a href="/contact" class="pp-site-nav__link @(IsActive("/contact") ? "is-active" : null)">Contact</a>
-            </nav>
-
-            <span class="pp-site-header__rule" aria-hidden="true"></span>
-
             <button type="button"
                     class="pp-icon-btn pp-site-header__theme"
                     title="@(IsLight ? "Switch to dark" : "Switch to light")"
@@ -98,17 +108,17 @@
             </div>
             <nav class="pp-drawer__nav">
                 <a href="/" @onclick="CloseMenu">Home</a>
+                <AuthorizeView Roles="admin">
+                    <Authorized>
+                        <a href="/admin" class="pp-drawer__studio" @onclick="CloseMenu">Go to studio</a>
+                    </Authorized>
+                </AuthorizeView>
                 <a href="/works" @onclick="CloseMenu">Collections</a>
                 <a href="/works?type=photograph" @onclick="CloseMenu">Photographs</a>
                 <a href="/works?type=drawing" @onclick="CloseMenu">Drawings</a>
                 <a href="/works?type=poem" @onclick="CloseMenu">Poems</a>
                 <a href="/about" @onclick="CloseMenu">About</a>
                 <a href="/contact" @onclick="CloseMenu">Contact</a>
-                <AuthorizeView Roles="admin">
-                    <Authorized>
-                        <a href="/admin" class="pp-drawer__studio" @onclick="CloseMenu">Go to studio</a>
-                    </Authorized>
-                </AuthorizeView>
                 <AuthorizeView>
                     <Authorized>
                         <a href="/api/auth/logout">Sign out</a>
@@ -127,6 +137,11 @@
     private bool menuOpen;
     private bool themeReady;
 
+    protected override void OnInitialized()
+    {
+        Navigation.LocationChanged += OnLocationChanged;
+    }
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender || themeReady)
@@ -144,12 +159,33 @@
         }
     }
 
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e) =>
+        InvokeAsync(StateHasChanged);
+
+    public void Dispose() =>
+        Navigation.LocationChanged -= OnLocationChanged;
+
     private void ToggleMenu() => menuOpen = !menuOpen;
     private void CloseMenu() => menuOpen = false;
 
-    private bool IsActive(string path) =>
-        Navigation.ToBaseRelativePath(Navigation.Uri)
-            .StartsWith(path.TrimStart('/'), StringComparison.OrdinalIgnoreCase);
+    private bool IsMediumActive(string medium)
+    {
+        var relative = Navigation.ToBaseRelativePath(Navigation.Uri);
+        if (!relative.StartsWith("works", StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        var query = relative.Contains('?', StringComparison.Ordinal)
+            ? relative[(relative.IndexOf('?') + 1)..]
+            : "";
+        var type = query
+            .Split('&', StringSplitOptions.RemoveEmptyEntries)
+            .Select(part => part.Split('=', 2))
+            .Where(parts => parts.Length == 2 && parts[0].Equals("type", StringComparison.OrdinalIgnoreCase))
+            .Select(parts => Uri.UnescapeDataString(parts[1]))
+            .FirstOrDefault();
+
+        return PortfolioMedia.Normalize(type).Equals(medium, StringComparison.OrdinalIgnoreCase);
+    }
 
     private async Task ToggleTheme()
     {

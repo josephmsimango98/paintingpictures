@@ -56,6 +56,81 @@ public sealed class SupabaseDataService
             "return=minimal",
             cancellationToken);
 
+    public async Task<IReadOnlyList<PortfolioCollection>> GetCollectionsAsync(
+        CancellationToken cancellationToken = default) =>
+        await GetAsync<PortfolioCollection>(
+            "collections?select=*&order=medium.asc,sort_order.asc,title.asc",
+            cancellationToken);
+
+    public async Task<IReadOnlyList<CollectionItemRow>> GetCollectionItemsAsync(
+        CancellationToken cancellationToken = default) =>
+        await GetAsync<CollectionItemRow>(
+            "collection_items?select=*&order=sort_order.asc",
+            cancellationToken);
+
+    public async Task<PortfolioCollection?> CreateCollectionAsync(
+        PortfolioCollection collection,
+        CancellationToken cancellationToken = default)
+    {
+        var created = await SendAsync<List<PortfolioCollection>>(
+            HttpMethod.Post,
+            "collections",
+            ToCollectionPayload(collection),
+            "return=representation",
+            cancellationToken);
+        return created?.FirstOrDefault();
+    }
+
+    public async Task UpdateCollectionAsync(
+        PortfolioCollection collection,
+        CancellationToken cancellationToken = default) =>
+        _ = await SendAsync<JsonElement>(
+            HttpMethod.Patch,
+            $"collections?id=eq.{collection.Id}",
+            ToCollectionPayload(collection),
+            "return=minimal",
+            cancellationToken);
+
+    public async Task DeleteCollectionAsync(long id, CancellationToken cancellationToken = default) =>
+        _ = await SendAsync<JsonElement>(
+            HttpMethod.Delete,
+            $"collections?id=eq.{id}",
+            null,
+            "return=minimal",
+            cancellationToken);
+
+    public async Task ReplaceCollectionItemsAsync(
+        long collectionId,
+        IReadOnlyList<int> itemIds,
+        CancellationToken cancellationToken = default)
+    {
+        _ = await SendAsync<JsonElement>(
+            HttpMethod.Delete,
+            $"collection_items?collection_id=eq.{collectionId}",
+            null,
+            "return=minimal",
+            cancellationToken);
+
+        if (itemIds.Count == 0)
+            return;
+
+        var payload = itemIds
+            .Select((itemId, index) => new
+            {
+                collection_id = collectionId,
+                portfolio_item_id = itemId,
+                sort_order = index + 1
+            })
+            .ToArray();
+
+        _ = await SendAsync<JsonElement>(
+            HttpMethod.Post,
+            "collection_items",
+            payload,
+            "return=minimal",
+            cancellationToken);
+    }
+
     public async Task<HeroGallerySettingsRow?> GetHeroSettingsAsync(CancellationToken cancellationToken = default)
     {
         var rows = await GetAsync<HeroGallerySettingsRow>(
@@ -348,6 +423,19 @@ public sealed class SupabaseDataService
             values["id"] = item.Id;
         return values;
     }
+
+    private static object ToCollectionPayload(PortfolioCollection collection) => new
+    {
+        title = collection.Title.Trim(),
+        slug = collection.Slug.Trim().ToLowerInvariant(),
+        medium = PortfolioMedia.Normalize(collection.Medium),
+        description = string.IsNullOrWhiteSpace(collection.Description)
+            ? null
+            : collection.Description.Trim(),
+        cover_item_id = collection.CoverItemId,
+        sort_order = Math.Max(0, collection.SortOrder),
+        updated_at = DateTimeOffset.UtcNow
+    };
 
     private sealed class LikeRow
     {
