@@ -1,0 +1,90 @@
+@page "/works"
+@rendermode InteractiveServer
+@inject PortfolioService PortfolioService
+
+<PageTitle>@(pageTitle) — The Irony</PageTitle>
+
+<SiteHeader />
+
+<section class="pp-works">
+    <div class="pp-works__intro">
+        <h1 class="pp-works__title">@pageTitle</h1>
+        <p class="pp-works__subtitle">@pageSubtitle</p>
+        <div class="pp-works__filters" role="tablist" aria-label="Filter works">
+            <a href="/works" class="pp-works__filter @(string.IsNullOrEmpty(Type) ? "is-active" : "")">All</a>
+            <a href="/works?type=photograph" class="pp-works__filter @(Type == "photograph" ? "is-active" : "")">Photographs</a>
+            <a href="/works?type=drawing" class="pp-works__filter @(Type == "drawing" ? "is-active" : "")">Drawings</a>
+            <a href="/works?type=poem" class="pp-works__filter @(Type == "poem" ? "is-active" : "")">Poems</a>
+        </div>
+    </div>
+
+    <div class="pp-photostream">
+        <div class="pp-flickr-grid">
+            @foreach (var row in rows)
+            {
+                <div class="pp-flickr-row @(row.IsLastRow ? "pp-flickr-row--last" : "")"
+                     style="--aspect-sum: @row.AspectSum.ToString("0.####", System.Globalization.CultureInfo.InvariantCulture); --item-count: @row.Items.Count;">
+                    @foreach (var item in row.Items)
+                    {
+                        var aspect = JustifiedGridLayout.GetAspectRatio(item);
+                        <a href="/item/@item.Id"
+                           class="pp-flickr-card"
+                           style="--aspect: @aspect.ToString("0.####", System.Globalization.CultureInfo.InvariantCulture);"
+                           title="@item.Title">
+                            @if (item.HasImage)
+                            {
+                                <img src="@item.Image" alt="@item.Title" class="pp-flickr-card-img" />
+                            }
+                            else
+                            {
+                                <div class="pp-flickr-card-poem">
+                                    <span class="pp-flickr-card-poem-text">@(item.Poem?.Split('\n')[0])</span>
+                                </div>
+                            }
+                            <div class="pp-flickr-card-hover">
+                                <span class="pp-flickr-card-title">@item.Title</span>
+                            </div>
+                        </a>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+<SiteFooter />
+
+@code {
+    [SupplyParameterFromQuery(Name = "type")]
+    public string? Type { get; set; }
+
+    private IReadOnlyList<JustifiedRow> rows = [];
+    private string pageTitle = "Works";
+    private string pageSubtitle = "The full collection.";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var all = await PortfolioService.LoadAsync();
+        var filtered = string.IsNullOrWhiteSpace(Type)
+            ? all
+            : PortfolioService.GetByType(Type);
+
+        rows = JustifiedGridLayout.BuildRows(filtered);
+
+        pageTitle = Type?.ToLowerInvariant() switch
+        {
+            "photograph" => "Photographs",
+            "drawing" => "Drawings",
+            "poem" => "Poems",
+            _ => "Works"
+        };
+
+        pageSubtitle = Type?.ToLowerInvariant() switch
+        {
+            "photograph" => "Capturing real moments.",
+            "drawing" => "Form through line and gesture.",
+            "poem" => "Words held with care.",
+            _ => "Photographs, drawings, and poems."
+        };
+    }
+}

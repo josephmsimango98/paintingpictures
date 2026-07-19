@@ -11,10 +11,15 @@
     <div class="pp-admin-header">
         <h2 class="pp-admin-title">Portfolio items</h2>
         <div class="pp-admin-header-actions">
-            <FluentButton Appearance="Appearance.Accent" @onclick="NewItem">+ New item</FluentButton>
+            <FluentButton Appearance="Appearance.Accent" @onclick="NewItem" Disabled="@isBusy">+ New item</FluentButton>
             <a href="/admin" class="pp-admin-back">← Dashboard</a>
         </div>
     </div>
+
+    @if (!string.IsNullOrEmpty(statusMessage))
+    {
+        <p class="@(statusIsError ? "pp-admin-status pp-admin-status--error" : "pp-admin-status")">@statusMessage</p>
+    }
 
     @if (Editing != null)
     {
@@ -31,8 +36,32 @@
                     <option value="poem">Poem</option>
                 </select>
 
+                <label class="pp-admin-label">Upload picture</label>
+                <div class="pp-admin-upload">
+                    <InputFile OnChange="OnImageSelected" accept="image/jpeg,image/png,image/webp,image/gif" />
+                    @if (isUploading)
+                    {
+                        <span class="pp-admin-upload-status">Uploading…</span>
+                    }
+                </div>
+
                 <label class="pp-admin-label">Image URL</label>
-                <input class="pp-admin-input" @bind="Editing.Image" placeholder="https://..." />
+                <input class="pp-admin-input" @bind="Editing.Image" placeholder="https://... or upload above" />
+
+                @if (!string.IsNullOrEmpty(Editing.Image))
+                {
+                    <label class="pp-admin-label">Preview</label>
+                    <div class="pp-admin-preview">
+                        <img src="@Editing.Image" alt="Preview" />
+                    </div>
+                }
+
+                <label class="pp-admin-label">Image dimensions</label>
+                <div class="pp-admin-dimensions">
+                    <input class="pp-admin-input" type="number" min="1" @bind="Editing.ImageWidth" aria-label="Image width" />
+                    <span>×</span>
+                    <input class="pp-admin-input" type="number" min="1" @bind="Editing.ImageHeight" aria-label="Image height" />
+                </div>
 
                 <label class="pp-admin-label">Description</label>
                 <textarea class="pp-admin-input pp-admin-textarea" @bind="Editing.Description" placeholder="Description"></textarea>
@@ -44,72 +73,207 @@
                 <textarea class="pp-admin-input pp-admin-textarea" @bind="Editing.Thoughts" placeholder="Thoughts"></textarea>
 
                 <div class="pp-admin-form-actions">
-                    <FluentButton Appearance="Appearance.Accent" @onclick="SaveItem">Save</FluentButton>
-                    <FluentButton Appearance="Appearance.Neutral" @onclick="CancelEdit">Cancel</FluentButton>
+                    <FluentButton Appearance="Appearance.Accent" @onclick="SaveItem" Disabled="@(isBusy || isUploading)">Save</FluentButton>
+                    <FluentButton Appearance="Appearance.Neutral" @onclick="CancelEdit" Disabled="@isBusy">Cancel</FluentButton>
                 </div>
             </div>
         </div>
     }
 
     <div class="pp-admin-table-wrap">
-        <table class="pp-admin-table">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Title</th>
-                    <th>Type</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var item in items)
-                {
-                    var captured = item;
+        @if (isLoading)
+        {
+            <p class="pp-admin-placeholder-body">Loading portfolio…</p>
+        }
+        else if (items.Count == 0)
+        {
+            <div class="pp-admin-placeholder">
+                <p class="pp-admin-placeholder-title">No portfolio items yet</p>
+                <p class="pp-admin-placeholder-body">Create a new item and upload a picture to get started.</p>
+            </div>
+        }
+        else
+        {
+            <table class="pp-admin-table">
+                <thead>
                     <tr>
-                        <td class="pp-admin-td-id">@captured.Id</td>
-                        <td>@captured.Title</td>
-                        <td><span class="pp-type-badge">@captured.TypeLabel</span></td>
-                        <td class="pp-admin-td-actions">
-                            <FluentButton Appearance="Appearance.Outline" @onclick="() => EditItem(captured)">Edit</FluentButton>
-                            <FluentButton Appearance="Appearance.Outline" @onclick="() => DeleteItem(captured.Id)" class="pp-admin-btn-danger">Delete</FluentButton>
-                            <a href="/item/@captured.Id" class="pp-admin-view-link">View</a>
-                        </td>
+                        <th>ID</th>
+                        <th>Title</th>
+                        <th>Type</th>
+                        <th>Actions</th>
                     </tr>
-                }
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    @foreach (var item in items)
+                    {
+                        var captured = item;
+                        <tr>
+                            <td class="pp-admin-td-id">@captured.Id</td>
+                            <td>@captured.Title</td>
+                            <td><span class="pp-type-badge">@captured.TypeLabel</span></td>
+                            <td class="pp-admin-td-actions">
+                                <FluentButton Appearance="Appearance.Outline" @onclick="() => EditItem(captured)">Edit</FluentButton>
+                                <FluentButton Appearance="Appearance.Outline" @onclick="() => DeleteItem(captured.Id)" class="pp-admin-btn-danger">Delete</FluentButton>
+                                <a href="/item/@captured.Id" class="pp-admin-view-link">View</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
     </div>
 </div>
 
 @code {
-    private IReadOnlyList<PortfolioItem> items = default!;
+    private IReadOnlyList<PortfolioItem> items = [];
     private PortfolioItem? Editing;
+    private bool isLoading = true;
+    private bool isBusy;
+    private bool isUploading;
+    private string? statusMessage;
+    private bool statusIsError;
+    private const long MaxUploadBytes = 10 * 1024 * 1024;
 
-    protected override void OnInitialized() => items = PortfolioService.GetAll();
-
-    private void NewItem() => Editing = new PortfolioItem();
-    private void EditItem(PortfolioItem item) => Editing = new PortfolioItem
+    protected override async Task OnInitializedAsync()
     {
-        Id = item.Id, Title = item.Title, Type = item.Type,
-        Image = item.Image, Description = item.Description,
-        Poem = item.Poem, Thoughts = item.Thoughts
-    };
-    private void CancelEdit() => Editing = null;
-
-    private void SaveItem()
-    {
-        if (Editing is null) return;
-        if (Editing.Id == 0)
-            PortfolioService.Add(Editing);
-        else
-            PortfolioService.Update(Editing);
-        Editing = null;
-        items = PortfolioService.GetAll();
+        try
+        {
+            items = await PortfolioService.LoadAsync() ?? [];
+        }
+        catch (Exception ex)
+        {
+            items = [];
+            SetStatus($"Could not load portfolio: {ex.Message}", isError: true);
+        }
+        finally
+        {
+            isLoading = false;
+        }
     }
 
-    private void DeleteItem(int id)
+    private void NewItem()
     {
-        PortfolioService.Delete(id);
-        items = PortfolioService.GetAll();
+        statusMessage = null;
+        Editing = new PortfolioItem();
+    }
+
+    private void EditItem(PortfolioItem item)
+    {
+        statusMessage = null;
+        Editing = new PortfolioItem
+        {
+            Id = item.Id,
+            Title = item.Title,
+            Type = item.Type,
+            Image = item.Image,
+            Description = item.Description,
+            Poem = item.Poem,
+            Thoughts = item.Thoughts,
+            ImageWidth = item.ImageWidth,
+            ImageHeight = item.ImageHeight
+        };
+    }
+
+    private void CancelEdit()
+    {
+        Editing = null;
+        isUploading = false;
+    }
+
+    private async Task OnImageSelected(InputFileChangeEventArgs e)
+    {
+        if (Editing is null)
+            return;
+
+        var file = e.File;
+        if (file is null)
+            return;
+
+        if (!file.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+        {
+            SetStatus("Please choose an image file (JPEG, PNG, WebP, or GIF).", isError: true);
+            return;
+        }
+
+        if (file.Size > MaxUploadBytes)
+        {
+            SetStatus("Image must be 10 MB or smaller.", isError: true);
+            return;
+        }
+
+        isUploading = true;
+        statusMessage = null;
+        try
+        {
+            await using var stream = file.OpenReadStream(MaxUploadBytes);
+            Editing.Image = await PortfolioService.UploadImageAsync(stream, file.Name, file.ContentType);
+            SetStatus("Picture uploaded. Save the item to keep the change.", isError: false);
+        }
+        catch (Exception ex)
+        {
+            SetStatus($"Upload failed: {ex.Message}", isError: true);
+        }
+        finally
+        {
+            isUploading = false;
+        }
+    }
+
+    private async Task SaveItem()
+    {
+        if (Editing is null)
+            return;
+
+        if (string.IsNullOrWhiteSpace(Editing.Title))
+        {
+            SetStatus("Title is required.", isError: true);
+            return;
+        }
+
+        isBusy = true;
+        try
+        {
+            if (Editing.Id == 0)
+                await PortfolioService.AddAsync(Editing);
+            else
+                await PortfolioService.UpdateAsync(Editing);
+
+            Editing = null;
+            items = await PortfolioService.LoadAsync() ?? [];
+            SetStatus("Item saved.", isError: false);
+        }
+        catch (Exception ex)
+        {
+            SetStatus($"Save failed: {ex.Message}", isError: true);
+        }
+        finally
+        {
+            isBusy = false;
+        }
+    }
+
+    private async Task DeleteItem(int id)
+    {
+        isBusy = true;
+        try
+        {
+            await PortfolioService.DeleteAsync(id);
+            items = await PortfolioService.LoadAsync() ?? [];
+            SetStatus("Item deleted.", isError: false);
+        }
+        catch (Exception ex)
+        {
+            SetStatus($"Delete failed: {ex.Message}", isError: true);
+        }
+        finally
+        {
+            isBusy = false;
+        }
+    }
+
+    private void SetStatus(string message, bool isError)
+    {
+        statusMessage = message;
+        statusIsError = isError;
     }
 }

@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <ItemGroup>
     <ProjectReference Include="..\WCG.PaintingPictures.Application\WCG.PaintingPictures.Application.csproj" />
@@ -16,6 +16,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
+    <UserSecretsId>9dfd929c-985e-4ad8-9b49-113ab02aaf74</UserSecretsId>
   </PropertyGroup>
 
 </Project>

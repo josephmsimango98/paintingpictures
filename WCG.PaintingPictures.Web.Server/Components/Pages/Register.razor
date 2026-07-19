@@ -1,0 +1,41 @@
+@page "/register"
+@attribute [AllowAnonymous]
+@rendermode InteractiveServer
+
+<PageTitle>Create account — The Irony</PageTitle>
+
+<SiteHeader />
+
+<main class="pp-login-page">
+    <form method="post" action="/api/auth/register" class="pp-login-form">
+        <AntiforgeryToken />
+        <span class="pp-login-eyebrow">Viewer account</span>
+        <h1 class="pp-login-title">Join the collection</h1>
+        <p class="pp-login-copy">Create an account to like works and leave thoughtful comments.</p>
+
+        @if (Error == "invalid")
+        {
+            <p class="pp-login-error">The account could not be created. Check the details and try again.</p>
+        }
+        else if (Error == "notconfigured")
+        {
+            <p class="pp-login-error">Authentication service is not configured.</p>
+        }
+
+        <label class="pp-login-label" for="register-name">Display name</label>
+        <input id="register-name" name="displayName" class="pp-login-input" required maxlength="80" autocomplete="name" />
+
+        <label class="pp-login-label" for="register-email">Email</label>
+        <input id="register-email" type="email" name="email" class="pp-login-input" required autocomplete="email" />
+
+        <label class="pp-login-label" for="register-password">Password</label>
+        <input id="register-password" type="password" name="password" class="pp-login-input" required minlength="8" autocomplete="new-password" />
+
+        <button type="submit" class="pp-login-btn">Create account</button>
+        <p class="pp-login-switch">Already have an account? <a href="/login">Sign in</a></p>
+    </form>
+</main>
+
+@code {
+    [SupplyParameterFromQuery] private string? Error { get; set; }
+}

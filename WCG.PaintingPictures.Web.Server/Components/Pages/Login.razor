@@ -6,10 +6,12 @@
 
 <SiteHeader />
 
-<div class="pp-login-page">
+<main class="pp-login-page">
     <form method="post" action="/api/auth/login" class="pp-login-form">
         <AntiforgeryToken />
-        <h2 class="pp-login-title">Sign in</h2>
+        <span class="pp-login-eyebrow">Member access</span>
+        <h1 class="pp-login-title">Welcome back</h1>
+        <p class="pp-login-copy">Sign in to like works, join conversations, or manage the collection.</p>
         @if (Error == "invalid")
         {
             <p class="pp-login-error">Invalid email or password.</p>
@@ -18,14 +20,20 @@
         {
             <p class="pp-login-error">Authentication service is not configured.</p>
         }
-        <input type="email" name="email" placeholder="Email" class="pp-login-input" required autocomplete="email" />
-        <input type="password" name="password" placeholder="Password" class="pp-login-input" required autocomplete="current-password" />
-        <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent" class="pp-login-btn">
-            Sign in
-        </FluentButton>
+        @if (Registered == "true")
+        {
+            <p class="pp-login-success">Account created. Check your email if confirmation is enabled, then sign in.</p>
+        }
+        <label class="pp-login-label" for="login-email">Email</label>
+        <input id="login-email" type="email" name="email" placeholder="you@example.com" class="pp-login-input" required autocomplete="email" />
+        <label class="pp-login-label" for="login-password">Password</label>
+        <input id="login-password" type="password" name="password" placeholder="Your password" class="pp-login-input" required autocomplete="current-password" />
+        <button type="submit" class="pp-login-btn">Sign in</button>
+        <p class="pp-login-switch">New to the collection? <a href="/register">Create a viewer account</a></p>
     </form>
-</div>
+</main>
 
 @code {
     [SupplyParameterFromQuery] private string? Error { get; set; }
+    [SupplyParameterFromQuery] private string? Registered { get; set; }
 }

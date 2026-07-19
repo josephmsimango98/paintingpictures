@@ -1,0 +1,110 @@
+@inject PortfolioService PortfolioService
+
+<section class="pp-hero-gallery" aria-label="Featured collections">
+    <div class="pp-hero-gallery__grid">
+        @foreach (var panel in panels)
+        {
+            <a href="@panel.Href"
+               class="pp-hero-card @panel.ModifierClass @(panel.IsPoem ? "pp-hero-card--poem" : "")">
+                @if (panel.IsPoem)
+                {
+                    <div class="pp-hero-card__poem">
+                        <span class="pp-hero-card__quote-mark" aria-hidden="true">“</span>
+                        <p class="pp-hero-card__quote">@panel.Quote</p>
+                        <span class="pp-hero-card__poem-rule" aria-hidden="true"></span>
+                        <span class="pp-hero-card__poem-label">Poem</span>
+                    </div>
+                }
+                else
+                {
+                    <div class="pp-hero-card__media @(string.IsNullOrEmpty(panel.Image) ? "is-empty" : "")">
+                        @if (!string.IsNullOrEmpty(panel.Image))
+                        {
+                            <img src="@panel.Image"
+                                 alt=""
+                                 class="pp-hero-card__img"
+                                 loading="@(panel.IsFeatured ? "eager" : "lazy")" />
+                        }
+                        else
+                        {
+                            <div class="pp-hero-card__skeleton" aria-hidden="true"></div>
+                        }
+                    </div>
+                    <div class="pp-hero-card__overlay">
+                        @if (panel.IsFeatured)
+                        {
+                            <span class="pp-hero-card__eyebrow">Featured</span>
+                        }
+                        <h2 class="pp-hero-card__title">@panel.Title</h2>
+                        <p class="pp-hero-card__desc">@panel.Description</p>
+                        <span class="pp-hero-card__cta">
+                            View Collection
+                            <span class="pp-hero-card__cta-arrow" aria-hidden="true">→</span>
+                        </span>
+                    </div>
+                }
+            </a>
+        }
+    </div>
+</section>
+
+@code {
+    private sealed record HeroPanel(
+        string Title,
+        string Description,
+        string? Image,
+        string Href,
+        string ModifierClass,
+        bool IsFeatured = false,
+        bool IsPoem = false,
+        string? Quote = null);
+
+    private List<HeroPanel> panels = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        var items = await PortfolioService.LoadAsync();
+        var photographs = items.Where(i => i.Type == "photograph" && i.HasImage).ToList();
+        var drawings = items.Where(i => i.Type == "drawing" && i.HasImage).ToList();
+        var poem = items.FirstOrDefault(i => i.Type == "poem");
+        var featured = photographs.ElementAtOrDefault(0) ?? items.FirstOrDefault(i => i.HasImage);
+        var drawing = drawings.ElementAtOrDefault(0);
+        var photography = photographs.ElementAtOrDefault(1) ?? photographs.ElementAtOrDefault(0);
+
+        var poemLines = poem?.Poem?
+            .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Take(3)
+            .ToArray() ?? ["I am learning to sit with silence."];
+
+        panels =
+        [
+            new HeroPanel(
+                featured?.Type == "drawing" ? "Drawings" : "Portraits",
+                featured?.Description?.Split('.')[0] ?? "A study in light and presence",
+                featured?.Image,
+                featured is null ? "/works?type=photograph" : $"/item/{featured.Id}",
+                "pp-hero-card--featured",
+                IsFeatured: true),
+            new HeroPanel(
+                "Poems",
+                "Words held in silence",
+                null,
+                poem is null ? "/works?type=poem" : $"/item/{poem.Id}",
+                "pp-hero-card--poem-span",
+                IsPoem: true,
+                Quote: string.Join("\n", poemLines)),
+            new HeroPanel(
+                "Drawings",
+                "Form through line and gesture",
+                drawing?.Image,
+                drawing is null ? "/works?type=drawing" : $"/item/{drawing.Id}",
+                "pp-hero-card--drawing"),
+            new HeroPanel(
+                "Photography",
+                "Moments held still",
+                photography?.Image,
+                "/works?type=photograph",
+                "pp-hero-card--photo")
+        ];
+    }
+}

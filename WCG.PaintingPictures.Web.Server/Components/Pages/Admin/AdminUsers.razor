@@ -1,7 +1,7 @@
 @page "/admin/users"
 @attribute [Authorize(Roles = "admin")]
 @rendermode InteractiveServer
-@inject IConfiguration Config
+@inject SupabaseDataService Supabase
 
 <PageTitle>Users — Admin</PageTitle>
 
@@ -13,23 +13,68 @@
         <a href="/admin" class="pp-admin-back">← Dashboard</a>
     </div>
 
-    @if (string.IsNullOrEmpty(Config["Supabase:Url"]))
+    @if (!Supabase.IsConfigured)
     {
         <div class="pp-admin-placeholder">
             <p class="pp-admin-placeholder-title">Supabase not configured</p>
             <p class="pp-admin-placeholder-body">
                 User management requires a connected Supabase project.
                 Set <code>Supabase:Url</code>, <code>Supabase:AnonKey</code>, and
-                <code>Supabase:AdminEmail</code> in <code>appsettings.json</code> to enable this feature.
+                <code>Supabase:ServiceRoleKey</code> using user secrets or environment variables.
             </p>
         </div>
     }
     else
     {
-        <div class="pp-admin-placeholder">
-            <p class="pp-admin-placeholder-body">
-                User management via Supabase Admin API (service role key required) — coming soon.
-            </p>
+        <div class="pp-admin-table-wrap">
+            <table class="pp-admin-table">
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Role</th>
+                        <th>Joined</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var profile in profiles)
+                    {
+                        <tr>
+                            <td>
+                                <strong>@(profile.DisplayName ?? profile.Email)</strong><br />
+                                <span class="pp-admin-user">@profile.Email</span>
+                            </td>
+                            <td>
+                                <select class="pp-admin-input pp-admin-role-select"
+                                        value="@profile.Role"
+                                        @onchange="e => ChangeRole(profile, e.Value?.ToString())">
+                                    <option value="viewer">Viewer</option>
+                                    <option value="admin">Admin</option>
+                                </select>
+                            </td>
+                            <td>@profile.CreatedAt.ToLocalTime().ToString("d MMM yyyy")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
         </div>
     }
 </div>
+
+@code {
+    private IReadOnlyList<UserProfile> profiles = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Supabase.IsConfigured)
+            profiles = await Supabase.GetProfilesAsync();
+    }
+
+    private async Task ChangeRole(UserProfile profile, string? role)
+    {
+        if (role is not ("admin" or "viewer") || role == profile.Role)
+            return;
+
+        await Supabase.UpdateRoleAsync(profile.Id, role);
+        profile.Role = role;
+    }
+}

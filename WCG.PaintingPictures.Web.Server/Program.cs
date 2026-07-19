@@ -3,12 +3,14 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.FluentUI.AspNetCore.Components;
 using WCG.PaintingPictures.Web.Server.Components;
+using WCG.PaintingPictures.Web.Server.Models;
 using WCG.PaintingPictures.Web.Server.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddHttpClient();
 builder.Services.AddFluentUIComponents();
+builder.Services.AddSingleton<SupabaseDataService>();
 builder.Services.AddSingleton<PortfolioService>();
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
@@ -41,7 +43,10 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 // Login — real HTTP POST so HttpContext.SignInAsync is available
-app.MapPost("/api/auth/login", async (HttpContext ctx, IConfiguration config) =>
+app.MapPost("/api/auth/login", async (
+    HttpContext ctx,
+    IConfiguration config,
+    SupabaseDataService dataService) =>
 {
     var form = await ctx.Request.ReadFormAsync();
     var email = form["email"].ToString();
@@ -63,8 +68,20 @@ app.MapPost("/api/auth/login", async (HttpContext ctx, IConfiguration config) =>
         if (session?.User is null)
             return Results.Redirect("/login?error=invalid");
 
-        var role = string.Equals(session.User.Email, adminEmail,
-            StringComparison.OrdinalIgnoreCase) ? "admin" : "user";
+        UserProfile? profile = null;
+        if (dataService.IsConfigured)
+        {
+            await dataService.EnsureViewerProfileAsync(
+                session.User.Id!,
+                session.User.Email!,
+                session.User.Email?.Split('@')[0]);
+            profile = await dataService.GetProfileAsync(session.User.Id!);
+        }
+        var role = profile?.Role is "admin" or "viewer"
+            ? profile.Role
+            : string.Equals(session.User.Email, adminEmail, StringComparison.OrdinalIgnoreCase)
+                ? "admin"
+                : "viewer";
 
         var claims = new List<Claim>
         {
@@ -81,6 +98,46 @@ app.MapPost("/api/auth/login", async (HttpContext ctx, IConfiguration config) =>
     catch
     {
         return Results.Redirect("/login?error=invalid");
+    }
+});
+
+// Registration — new accounts always start as viewers.
+app.MapPost("/api/auth/register", async (
+    HttpContext ctx,
+    IConfiguration config,
+    SupabaseDataService dataService) =>
+{
+    var form = await ctx.Request.ReadFormAsync();
+    var email = form["email"].ToString().Trim();
+    var password = form["password"].ToString();
+    var displayName = form["displayName"].ToString().Trim();
+
+    var url = config["Supabase:Url"];
+    var key = config["Supabase:AnonKey"];
+    if (string.IsNullOrWhiteSpace(url) || string.IsNullOrWhiteSpace(key))
+        return Results.Redirect("/register?error=notconfigured");
+
+    try
+    {
+        var client = new Supabase.Client(url, key,
+            new Supabase.SupabaseOptions { AutoRefreshToken = false });
+        var session = await client.Auth.SignUp(email, password);
+        if (session?.User is null)
+            return Results.Redirect("/register?error=invalid");
+
+        if (dataService.IsConfigured)
+        {
+            await dataService.EnsureViewerProfileAsync(
+                session.User.Id!,
+                email,
+                displayName);
+        }
+
+        return Results.Redirect("/login?registered=true");
+    }
+    catch
+    {
+        return Results.Redirect("/register?error=invalid");
     }
 });
 
