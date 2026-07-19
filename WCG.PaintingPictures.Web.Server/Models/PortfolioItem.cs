@@ -31,10 +31,16 @@ public class PortfolioItem
     [JsonPropertyName("image_height")]
     public int ImageHeight { get; set; } = 3;
 
+    [JsonPropertyName("is_published")]
+    public bool IsPublished { get; set; } = true;
+
     [JsonIgnore]
     public string TypeLabel =>
         string.IsNullOrEmpty(Type) ? "" : char.ToUpper(Type[0]) + Type[1..];
 
     [JsonIgnore]
     public bool HasImage => !string.IsNullOrEmpty(Image);
+
+    [JsonIgnore]
+    public string VisibilityLabel => IsPublished ? "Published" : "Draft";
 }

@@ -337,6 +337,7 @@ public sealed class SupabaseDataService
         "image/png" => ".png",
         "image/webp" => ".webp",
         "image/gif" => ".gif",
+        "image/heic" or "image/heif" => ".jpg",
         _ => ".bin"
     };
 
@@ -417,7 +418,8 @@ public sealed class SupabaseDataService
             ["poem"] = item.Poem,
             ["thoughts"] = item.Thoughts,
             ["image_width"] = Math.Max(1, item.ImageWidth),
-            ["image_height"] = Math.Max(1, item.ImageHeight)
+            ["image_height"] = Math.Max(1, item.ImageHeight),
+            ["is_published"] = item.IsPublished
         };
         if (includeId)
             values["id"] = item.Id;

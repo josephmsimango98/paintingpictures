@@ -211,15 +211,20 @@ else
     protected override async Task OnParametersSetAsync()
     {
         allItems = await PortfolioService.LoadAsync();
-        item = PortfolioService.GetById(Id);
+
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var isAdmin = authState.User.IsInRole("admin");
+        userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        userName = authState.User.Identity?.Name?.Split('@')[0] ?? "Viewer";
+
+        if (!isAdmin)
+            allItems = allItems.Where(x => x.IsPublished).ToList();
+
+        item = PortfolioService.GetById(Id, publishedOnly: !isAdmin);
         if (item != null)
         {
-            previous = PortfolioService.GetPrevious(Id);
-            next = PortfolioService.GetNext(Id);
-
-            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-            userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-            userName = authState.User.Identity?.Name?.Split('@')[0] ?? "Viewer";
+            previous = PortfolioService.GetPrevious(Id, publishedOnly: !isAdmin);
+            next = PortfolioService.GetNext(Id, publishedOnly: !isAdmin);
             engagement = await Supabase.GetEngagementAsync(Id, userId);
         }
     }

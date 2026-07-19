@@ -1,3 +1,4 @@
+using ImageMagick;
 using WCG.PaintingPictures.Web.Server.Models;
 
 namespace WCG.PaintingPictures.Web.Server.Services;
@@ -80,8 +81,14 @@ public class PortfolioService
 
     public IReadOnlyList<PortfolioItem> GetAll() => _items.AsReadOnly();
 
-    public IReadOnlyList<PortfolioItem> GetByType(string type) =>
-        _items.Where(x => string.Equals(x.Type, type, StringComparison.OrdinalIgnoreCase)).ToList();
+    public IReadOnlyList<PortfolioItem> GetPublished() =>
+        _items.Where(x => x.IsPublished).ToList();
+
+    public IReadOnlyList<PortfolioItem> GetByType(string type, bool publishedOnly = false) =>
+        _items
+            .Where(x => string.Equals(x.Type, type, StringComparison.OrdinalIgnoreCase))
+            .Where(x => !publishedOnly || x.IsPublished)
+            .ToList();
 
     public async Task<IReadOnlyList<PortfolioItem>> LoadAsync(CancellationToken cancellationToken = default)
     {
@@ -102,25 +109,150 @@ public class PortfolioService
         return GetAll();
     }
 
-    public Task<string> UploadImageAsync(
+    public async Task<UploadedPortfolioImage> UploadImageAsync(
         Stream content,
         string fileName,
         string contentType,
-        CancellationToken cancellationToken = default) =>
-        _supabase.UploadImageAsync(content, fileName, contentType, cancellationToken);
-
-    public PortfolioItem? GetById(int id) => _items.FirstOrDefault(x => x.Id == id);
-
-    public PortfolioItem? GetNext(int id)
+        CancellationToken cancellationToken = default)
     {
-        var index = _items.FindIndex(x => x.Id == id);
-        return index >= 0 && index < _items.Count - 1 ? _items[index + 1] : null;
+        await using var source = new MemoryStream();
+        await content.CopyToAsync(source, cancellationToken);
+        var sourceBytes = source.ToArray();
+        if (sourceBytes.Length == 0)
+            throw new InvalidOperationException("The uploaded file was empty.");
+
+        var extension = Path.GetExtension(fileName);
+        var looksLikeHeic = IsHeicFile(extension, contentType, sourceBytes);
+
+        using var image = LoadImage(sourceBytes, looksLikeHeic);
+        image.AutoOrient();
+
+        if (image.ColorSpace != ColorSpace.sRGB)
+            image.ColorSpace = ColorSpace.sRGB;
+
+        var width = checked((int)image.Width);
+        var height = checked((int)image.Height);
+        if (width <= 0 || height <= 0)
+            throw new InvalidOperationException("Could not read image dimensions.");
+
+        var isHeic = looksLikeHeic || IsHeicFormat(image.Format);
+        byte[] uploadBytes;
+        string uploadFileName;
+        string uploadContentType;
+
+        if (isHeic)
+        {
+            // Browsers cannot display HEIC; always store a JPEG copy.
+            image.Quality = 90;
+            uploadBytes = image.ToByteArray(MagickFormat.Jpeg);
+            uploadFileName = Path.ChangeExtension(
+                string.IsNullOrWhiteSpace(fileName) ? "upload.jpg" : fileName,
+                ".jpg");
+            uploadContentType = "image/jpeg";
+        }
+        else
+        {
+            uploadBytes = sourceBytes;
+            uploadFileName = fileName;
+            uploadContentType = string.IsNullOrWhiteSpace(contentType)
+                ? "application/octet-stream"
+                : contentType;
+        }
+
+        await using var upload = new MemoryStream(uploadBytes, writable: false);
+        var url = await _supabase.UploadImageAsync(
+            upload,
+            uploadFileName,
+            uploadContentType,
+            cancellationToken);
+
+        return new UploadedPortfolioImage(url, width, height, isHeic);
     }
 
-    public PortfolioItem? GetPrevious(int id)
+    private static MagickImage LoadImage(byte[] sourceBytes, bool preferHeic)
     {
-        var index = _items.FindIndex(x => x.Id == id);
-        return index > 0 ? _items[index - 1] : null;
+        try
+        {
+            if (preferHeic)
+            {
+                var settings = new MagickReadSettings { Format = MagickFormat.Heic };
+                return new MagickImage(sourceBytes, settings);
+            }
+
+            return new MagickImage(sourceBytes);
+        }
+        catch (MagickException) when (preferHeic)
+        {
+            // Some phones label HEIF with a HEIC extension (or the reverse).
+            var settings = new MagickReadSettings { Format = MagickFormat.Heif };
+            return new MagickImage(sourceBytes, settings);
+        }
+        catch (MagickException ex)
+        {
+            throw new InvalidOperationException(
+                "Could not read this image. If it is HEIC/HEIF, try exporting as JPEG, or re-upload after restarting the app so ImageMagick codecs are loaded.",
+                ex);
+        }
+    }
+
+    private static bool IsHeicFile(string? extension, string? contentType, byte[] bytes)
+    {
+        if (!string.IsNullOrWhiteSpace(extension)
+            && (extension.Equals(".heic", StringComparison.OrdinalIgnoreCase)
+                || extension.Equals(".heif", StringComparison.OrdinalIgnoreCase)))
+            return true;
+
+        if (!string.IsNullOrWhiteSpace(contentType)
+            && (contentType.Equals("image/heic", StringComparison.OrdinalIgnoreCase)
+                || contentType.Equals("image/heif", StringComparison.OrdinalIgnoreCase)
+                || contentType.Equals("image/heic-sequence", StringComparison.OrdinalIgnoreCase)
+                || contentType.Equals("image/heif-sequence", StringComparison.OrdinalIgnoreCase)))
+            return true;
+
+        // HEIF brand is often in bytes 4..11 as "ftypheic" / "ftypheif" / "ftypmif1".
+        if (bytes.Length >= 12)
+        {
+            var brand = System.Text.Encoding.ASCII.GetString(bytes, 4, 8);
+            if (brand.StartsWith("ftyp", StringComparison.OrdinalIgnoreCase)
+                && (brand.Contains("heic", StringComparison.OrdinalIgnoreCase)
+                    || brand.Contains("heif", StringComparison.OrdinalIgnoreCase)
+                    || brand.Contains("mif1", StringComparison.OrdinalIgnoreCase)
+                    || brand.Contains("msf1", StringComparison.OrdinalIgnoreCase)))
+                return true;
+        }
+
+        return false;
+    }
+
+    private static bool IsHeicFormat(MagickFormat format)
+    {
+        var name = format.ToString();
+        return name.Contains("Heic", StringComparison.OrdinalIgnoreCase)
+            || name.Contains("Heif", StringComparison.OrdinalIgnoreCase);
+    }
+
+    public PortfolioItem? GetById(int id, bool publishedOnly = false)
+    {
+        var item = _items.FirstOrDefault(x => x.Id == id);
+        if (item is null)
+            return null;
+        if (publishedOnly && !item.IsPublished)
+            return null;
+        return item;
+    }
+
+    public PortfolioItem? GetNext(int id, bool publishedOnly = false)
+    {
+        var items = publishedOnly ? _items.Where(x => x.IsPublished).ToList() : _items;
+        var index = items.FindIndex(x => x.Id == id);
+        return index >= 0 && index < items.Count - 1 ? items[index + 1] : null;
+    }
+
+    public PortfolioItem? GetPrevious(int id, bool publishedOnly = false)
+    {
+        var items = publishedOnly ? _items.Where(x => x.IsPublished).ToList() : _items;
+        var index = items.FindIndex(x => x.Id == id);
+        return index > 0 ? items[index - 1] : null;
     }
 
     public void Add(PortfolioItem item)
@@ -164,3 +296,9 @@ public class PortfolioService
         Delete(id);
     }
 }
+
+public sealed record UploadedPortfolioImage(
+    string Url,
+    int Width,
+    int Height,
+    bool WasConvertedFromHeic);

@@ -44,8 +44,12 @@ public static class JustifiedGridLayout
         return rows;
     }
 
-    public static double GetAspectRatio(PortfolioItem item) =>
-        item.HasImage && item.ImageHeight > 0
-            ? (double)item.ImageWidth / item.ImageHeight
-            : 1.0;
+    public static double GetAspectRatio(PortfolioItem item)
+    {
+        if (!item.HasImage || item.ImageWidth <= 0 || item.ImageHeight <= 0)
+            return 1.0;
+
+        var ratio = (double)item.ImageWidth / item.ImageHeight;
+        return Math.Clamp(ratio, 0.2, 5.0);
+    }
 }

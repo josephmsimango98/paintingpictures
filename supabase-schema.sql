@@ -17,6 +17,7 @@ create table if not exists public.portfolio_items (
     thoughts text,
     image_width integer not null default 4 check (image_width > 0),
     image_height integer not null default 3 check (image_height > 0),
+    is_published boolean not null default true,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now()
 );

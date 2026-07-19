@@ -2,6 +2,7 @@
 @attribute [Authorize(Roles = "admin")]
 @rendermode InteractiveServer
 @inject PortfolioService PortfolioService
+@inject IJSRuntime JS
 
 <PageTitle>Portfolio — Admin</PageTitle>
 
@@ -53,7 +54,8 @@
                     <div class="pp-admin-field">
                         <label class="pp-admin-label">Upload picture</label>
                         <div class="pp-admin-upload">
-                            <InputFile OnChange="OnImageSelected" accept="image/jpeg,image/png,image/webp,image/gif" />
+                            <InputFile OnChange="OnImageSelected"
+                                       accept=".jpg,.jpeg,.png,.webp,.gif,.heic,.heif,image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif" />
                             @if (isUploading)
                             {
                                 <span class="pp-admin-upload-status">Uploading…</span>
@@ -74,7 +76,7 @@
                         </div>
                     }
                     <div class="pp-admin-field">
-                        <label class="pp-admin-label">Image dimensions</label>
+                        <label class="pp-admin-label">Image dimensions <span>(detected on upload)</span></label>
                         <div class="pp-admin-dimensions">
                             <input class="pp-admin-input" type="number" min="1" @bind="Editing.ImageWidth" aria-label="Image width" />
                             <span>×</span>
@@ -95,8 +97,28 @@
                     </div>
                 </fieldset>
 
+                <fieldset class="pp-admin-fieldset">
+                    <legend class="pp-admin-fieldset__legend">Visibility</legend>
+                    <label class="pp-admin-check">
+                        <input type="checkbox" @bind="Editing.IsPublished" />
+                        <span>
+                            <strong>Published</strong>
+                            <small>Visible on the public site when checked. Uncheck to keep as a draft.</small>
+                        </span>
+                    </label>
+                </fieldset>
+
                 <div class="pp-admin-form-actions">
                     <button type="button" class="pp-btn pp-btn--accent" @onclick="SaveItem" disabled="@(isBusy || isUploading)">Save</button>
+                    @if (Editing.Id != 0)
+                    {
+                        <button type="button"
+                                class="pp-btn pp-btn--danger"
+                                @onclick="() => DeleteItem(Editing.Id)"
+                                disabled="@isBusy">
+                            Delete
+                        </button>
+                    }
                     <button type="button" class="pp-btn" @onclick="CancelEdit" disabled="@isBusy">Cancel</button>
                 </div>
             </div>
@@ -123,6 +145,7 @@
                         <th>Preview</th>
                         <th>Title</th>
                         <th>Category</th>
+                        <th>Visibility</th>
                         <th></th>
                     </tr>
                 </thead>
@@ -143,9 +166,25 @@
                             </td>
                             <td class="pp-admin-td-title">@captured.Title</td>
                             <td><span class="pp-type-badge">@captured.TypeLabel</span></td>
+                            <td>
+                                <span class="pp-visibility-badge @(captured.IsPublished ? "is-published" : "is-draft")">
+                                    @captured.VisibilityLabel
+                                </span>
+                            </td>
                             <td class="pp-admin-td-actions">
                                 <button type="button" class="pp-btn pp-btn--sm" @onclick="() => EditItem(captured)">Edit</button>
-                                <button type="button" class="pp-btn pp-btn--sm pp-btn--danger" @onclick="() => DeleteItem(captured.Id)">Delete</button>
+                                <button type="button"
+                                        class="pp-btn pp-btn--sm"
+                                        @onclick="() => TogglePublished(captured)"
+                                        disabled="@isBusy">
+                                    @(captured.IsPublished ? "Unpublish" : "Publish")
+                                </button>
+                                <button type="button"
+                                        class="pp-btn pp-btn--sm pp-btn--danger"
+                                        @onclick="() => DeleteItem(captured.Id)"
+                                        disabled="@isBusy">
+                                    Delete
+                                </button>
                                 <a href="/item/@captured.Id" class="pp-admin-view-link">View</a>
                             </td>
                         </tr>
@@ -176,7 +215,9 @@
     private bool isUploading;
     private string? statusMessage;
     private bool statusIsError;
-    private const long MaxUploadBytes = 10 * 1024 * 1024;
+    private const long MaxUploadBytes = 25 * 1024 * 1024;
+    private static readonly HashSet<string> SupportedImageExtensions =
+        [".jpg", ".jpeg", ".png", ".webp", ".gif", ".heic", ".heif"];
     private string BackHref => LocalReturnUrl(ReturnUrl);
 
     protected override async Task OnInitializedAsync()
@@ -225,7 +266,8 @@
         statusMessage = null;
         Editing = new PortfolioItem
         {
-            Type = PortfolioMedia.Normalize(type)
+            Type = PortfolioMedia.Normalize(type),
+            IsPublished = false
         };
     }
 
@@ -242,7 +284,8 @@
             Poem = item.Poem,
             Thoughts = item.Thoughts,
             ImageWidth = item.ImageWidth,
-            ImageHeight = item.ImageHeight
+            ImageHeight = item.ImageHeight,
+            IsPublished = item.IsPublished
         };
     }
 
@@ -261,15 +304,16 @@
         if (file is null)
             return;
 
-        if (!file.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+        var extension = Path.GetExtension(file.Name);
+        if (!SupportedImageExtensions.Contains(extension, StringComparer.OrdinalIgnoreCase))
         {
-            SetStatus("Please choose an image file (JPEG, PNG, WebP, or GIF).", isError: true);
+            SetStatus("Please choose a JPEG, PNG, WebP, GIF, HEIC, or HEIF image.", isError: true);
             return;
         }
 
         if (file.Size > MaxUploadBytes)
         {
-            SetStatus("Image must be 10 MB or smaller.", isError: true);
+            SetStatus("Image must be 25 MB or smaller.", isError: true);
             return;
         }
 
@@ -278,8 +322,17 @@
         try
         {
             await using var stream = file.OpenReadStream(MaxUploadBytes);
-            Editing.Image = await PortfolioService.UploadImageAsync(stream, file.Name, file.ContentType);
-            SetStatus("Picture uploaded. Save the item to keep the change.", isError: false);
+            var uploaded = await PortfolioService.UploadImageAsync(stream, file.Name, file.ContentType);
+            Editing.Image = uploaded.Url;
+            Editing.ImageWidth = uploaded.Width;
+            Editing.ImageHeight = uploaded.Height;
+
+            var conversionNote = uploaded.WasConvertedFromHeic
+                ? " HEIC was converted to JPEG for browser compatibility."
+                : "";
+            SetStatus(
+                $"Picture uploaded at {uploaded.Width} × {uploaded.Height}.{conversionNote} Save the item to keep the change.",
+                isError: false);
         }
         catch (Exception ex)
         {
@@ -305,6 +358,7 @@
         isBusy = true;
         try
         {
+            var wasPublished = Editing.IsPublished;
             if (Editing.Id == 0)
                 await PortfolioService.AddAsync(Editing);
             else
@@ -312,7 +366,11 @@
 
             Editing = null;
             items = await PortfolioService.LoadAsync() ?? [];
-            SetStatus("Item saved.", isError: false);
+            SetStatus(
+                wasPublished
+                    ? "Item saved and published."
+                    : "Item saved as draft.",
+                isError: false);
         }
         catch (Exception ex)
         {
@@ -324,12 +382,54 @@
         }
     }
 
-    private async Task DeleteItem(int id)
+    private async Task TogglePublished(PortfolioItem item)
     {
         isBusy = true;
         try
         {
+            var updated = new PortfolioItem
+            {
+                Id = item.Id,
+                Title = item.Title,
+                Type = item.Type,
+                Image = item.Image,
+                Description = item.Description,
+                Poem = item.Poem,
+                Thoughts = item.Thoughts,
+                ImageWidth = item.ImageWidth,
+                ImageHeight = item.ImageHeight,
+                IsPublished = !item.IsPublished
+            };
+            await PortfolioService.UpdateAsync(updated);
+            items = await PortfolioService.LoadAsync() ?? [];
+            SetStatus(
+                updated.IsPublished ? "Item published." : "Item unpublished (draft).",
+                isError: false);
+        }
+        catch (Exception ex)
+        {
+            SetStatus($"Visibility update failed: {ex.Message}", isError: true);
+        }
+        finally
+        {
+            isBusy = false;
+        }
+    }
+
+    private async Task DeleteItem(int id)
+    {
+        var confirmed = await JS.InvokeAsync<bool>(
+            "confirm",
+            "Delete this work permanently? This cannot be undone.");
+        if (!confirmed)
+            return;
+
+        isBusy = true;
+        try
+        {
             await PortfolioService.DeleteAsync(id);
+            if (Editing?.Id == id)
+                Editing = null;
             items = await PortfolioService.LoadAsync() ?? [];
             SetStatus("Item deleted.", isError: false);
         }

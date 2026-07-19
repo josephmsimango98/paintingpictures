@@ -84,6 +84,7 @@ public sealed partial class CollectionService
             .Where(byId.ContainsKey)
             .Select(id => byId[id])
             .Where(item => item.Type.Equals(collection.Medium, StringComparison.OrdinalIgnoreCase))
+            .Where(item => item.IsPublished)
             .ToList();
     }
 
@@ -176,9 +177,13 @@ public sealed partial class CollectionService
         {
             var coverId = collection.CoverItemId
                 ?? collection.ItemIds.FirstOrDefault();
-            collection.CoverItem = coverId > 0
-                ? items.FirstOrDefault(x => x.Id == coverId)
+            var cover = coverId > 0
+                ? items.FirstOrDefault(x => x.Id == coverId && x.IsPublished)
                 : null;
+            cover ??= collection.ItemIds
+                .Select(id => items.FirstOrDefault(x => x.Id == id && x.IsPublished))
+                .FirstOrDefault(x => x is not null);
+            collection.CoverItem = cover;
         }
     }
 

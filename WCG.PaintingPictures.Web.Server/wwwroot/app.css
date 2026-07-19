@@ -1189,8 +1189,9 @@ html.pp-light .pp-hero-card--poem { background: #1a1814; }
 }
 
 .pp-flickr-row--last .pp-flickr-card {
-    flex-grow: 0;
+    flex: 0 0 auto;
     width: calc(var(--aspect) * 240px);
+    max-width: 100%;
 }
 
 .pp-flickr-card {
@@ -2159,6 +2160,62 @@ html.pp-light .pp-footer {
     color: var(--pp-text);
     margin-bottom: var(--space-2);
     padding: 0;
+}
+
+.pp-admin-check {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    padding: var(--space-3);
+    border: 1px solid var(--pp-border);
+    background: var(--pp-surface);
+    cursor: pointer;
+}
+
+.pp-admin-check input {
+    margin-top: 3px;
+    accent-color: var(--pp-accent);
+}
+
+.pp-admin-check span {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.pp-admin-check strong {
+    font-family: var(--font-body);
+    font-size: var(--text-label);
+    font-weight: 600;
+    color: var(--pp-text);
+}
+
+.pp-admin-check small {
+    color: var(--pp-text-muted);
+    font-size: var(--text-meta);
+    line-height: 1.4;
+}
+
+.pp-visibility-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    padding: 2px 8px;
+    border: 1px solid var(--pp-border);
+    font-size: var(--text-meta);
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--pp-text-muted);
+}
+
+.pp-visibility-badge.is-published {
+    color: var(--pp-accent);
+    border-color: color-mix(in srgb, var(--pp-accent) 45%, var(--pp-border));
+}
+
+.pp-visibility-badge.is-draft {
+    color: var(--pp-text-muted);
 }
 
 .pp-admin-field {

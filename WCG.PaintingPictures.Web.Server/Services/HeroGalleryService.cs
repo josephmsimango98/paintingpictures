@@ -77,7 +77,7 @@ public sealed class HeroGalleryService
     public static HeroGalleryConfig BuildFallback(IReadOnlyList<PortfolioItem>? items)
     {
         var safe = (items ?? [])
-            .Where(i => i is not null)
+            .Where(i => i is not null && i.IsPublished)
             .ToList();
 
         var photographs = safe
@@ -121,7 +121,7 @@ public sealed class HeroGalleryService
             slot.PortfolioItemId = row.PortfolioItemId;
             slot.SortOrder = row.SortOrder;
             slot.Item = row.PortfolioItemId is int id
-                ? items.FirstOrDefault(x => x.Id == id)
+                ? items.FirstOrDefault(x => x.Id == id && x.IsPublished)
                 : null;
         }
 

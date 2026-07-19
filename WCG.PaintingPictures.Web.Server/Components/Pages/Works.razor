@@ -161,7 +161,7 @@
             : Collection.Trim().ToLowerInvariant();
 
         await PortfolioService.LoadAsync();
-        mediumItems = PortfolioService.GetByType(medium);
+        mediumItems = PortfolioService.GetByType(medium, publishedOnly: true);
         customCollections = await CollectionService.GetByMediumAsync(medium);
 
         if (selectedSlug == "all")
