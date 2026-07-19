@@ -19,9 +19,10 @@
     --space-9: 128px;
 
     --font-display: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
-    --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --font-body: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+    --font-ui: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
 
-    --header-height: 76px;
+    --header-height: 96px;
     --hero-height: clamp(440px, 58vh, 560px);
     --surface-raised: #151515;
     --ease-gallery: 600ms ease;
@@ -53,7 +54,7 @@ html.pp-light {
 html, body {
     background-color: var(--pp-bg);
     color: var(--pp-text);
-    font-family: var(--font-body);
+    font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
     font-style: normal;
     font-weight: 400;
     min-height: 100vh;
@@ -65,6 +66,12 @@ html, body {
     background-color: var(--pp-bg);
     min-height: 100vh;
     color: var(--pp-text);
+    font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+}
+
+.portfolio-root,
+.portfolio-root * {
+    font-family: inherit;
 }
 
 a { color: inherit; }
@@ -97,7 +104,7 @@ a { color: inherit; }
 
 .pp-text-link:hover { border-bottom-color: var(--pp-accent); }
 
-/* ── Site header ── */
+/* ── Site header (editorial / gallery) ── */
 .pp-site-header {
     position: relative;
     z-index: 40;
@@ -110,8 +117,8 @@ a { color: inherit; }
     grid-template-columns: 1fr auto 1fr;
     align-items: center;
     min-height: var(--header-height);
-    padding: 0 var(--space-5);
-    gap: var(--space-4);
+    padding: 28px clamp(20px, 4vw, 48px);
+    gap: var(--space-5);
 }
 
 .pp-site-header__left {
@@ -124,67 +131,100 @@ a { color: inherit; }
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    gap: var(--space-1);
+    gap: 40px;
 }
 
 .pp-site-brand {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0;
+    gap: 8px;
     text-decoration: none;
     color: var(--pp-text);
-    animation: pp-fade-in 700ms ease both;
+    animation: pp-fade-in 800ms ease both;
+}
+
+.pp-site-brand__mark {
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 14px;
+    line-height: 1;
 }
 
 .pp-site-brand__logo {
-    width: 28px;
-    height: 28px;
+    width: 36px;
+    height: 36px;
     object-fit: contain;
     filter: invert(1);
-    opacity: 0.9;
-    margin-bottom: 2px;
+    opacity: 0.88;
+    flex-shrink: 0;
 }
 
 html.pp-light .pp-site-brand__logo { filter: none; }
 
 .pp-site-brand__title {
     font-family: var(--font-display);
-    font-size: 1.45rem;
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    line-height: 1.1;
+    font-size: clamp(1.85rem, 2.4vw, 2.15rem);
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    line-height: 1;
+    white-space: nowrap;
 }
 
 .pp-site-brand__tagline {
     font-family: var(--font-body);
-    font-size: 0.58rem;
+    font-size: 0.7rem;
     font-weight: 400;
-    letter-spacing: 0.12em;
+    font-style: italic;
+    letter-spacing: 0.16em;
     text-transform: uppercase;
     color: var(--pp-text-muted);
+    line-height: 1.2;
+    text-align: center;
 }
 
 .pp-site-nav {
     display: flex;
     align-items: center;
-    gap: 20px;
-    margin-right: var(--space-2);
-    padding-right: var(--space-2);
-    border-right: 1px solid var(--pp-border);
+    gap: 36px;
 }
 
 .pp-site-nav__link {
     font-family: var(--font-body);
-    font-size: 0.78rem;
+    font-size: 0.92rem;
     font-weight: 400;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.08em;
     color: var(--pp-text-muted);
     text-decoration: none;
-    transition: color var(--ease-ui);
+    transition: color 600ms ease;
 }
 
 .pp-site-nav__link:hover { color: var(--pp-text); }
+
+.pp-site-header__actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.pp-site-header__theme {
+    width: 36px;
+    height: 36px;
+    opacity: 0.75;
+    transition: opacity 600ms ease, color 600ms ease;
+}
+
+.pp-site-header__theme:hover { opacity: 1; }
+
+.pp-site-header__menu {
+    width: 36px;
+    height: 36px;
+    opacity: 0.8;
+    transition: opacity 600ms ease, color 600ms ease;
+}
+
+.pp-site-header__menu:hover { opacity: 1; }
 
 /* Drawer */
 .pp-drawer-backdrop {
@@ -229,18 +269,24 @@ html.pp-light .pp-site-brand__logo { filter: none; }
 
 .pp-drawer__nav a {
     display: block;
-    padding: var(--space-3) var(--space-2);
+    padding: 18px 8px;
     color: var(--pp-text);
     text-decoration: none;
     font-family: var(--font-display);
-    font-size: 1.35rem;
+    font-size: 1.55rem;
+    font-weight: 400;
     border-bottom: 1px solid var(--pp-border);
-    transition: color var(--ease-ui), padding-left var(--ease-ui);
+    transition: color 600ms ease, padding-left 600ms ease;
 }
 
 .pp-drawer__nav a:hover {
     color: var(--pp-accent);
     padding-left: var(--space-3);
+}
+
+.pp-drawer__studio {
+    color: var(--pp-accent) !important;
+    margin-top: var(--space-2);
 }
 
 @keyframes pp-fade-in {
@@ -692,7 +738,8 @@ html.pp-light .pp-hero-card--poem-span { background: #1a1814; }
 
 /* ── Landing responsive ── */
 @media (max-width: 1100px) {
-    .pp-site-nav { gap: 16px; }
+    .pp-site-nav { gap: 24px; }
+    .pp-site-header__right { gap: 24px; }
     .pp-hero-gallery__grid {
         grid-template-columns: 1.2fr 1fr 1fr;
         height: auto;
@@ -708,9 +755,13 @@ html.pp-light .pp-hero-card--poem-span { background: #1a1814; }
 
 @media (max-width: 800px) {
     .pp-site-nav { display: none; }
-    .pp-site-header__inner { padding: 0 var(--space-3); min-height: 68px; }
-    .pp-site-brand__title { font-size: 1.3rem; }
-    .pp-site-brand__tagline { display: none; }
+    .pp-site-header__inner {
+        padding: 20px var(--space-3);
+        min-height: 84px;
+    }
+    .pp-site-brand__title { font-size: 1.7rem; }
+    .pp-site-brand__logo { width: 30px; height: 30px; }
+    .pp-site-brand__tagline { font-size: 0.62rem; letter-spacing: 0.12em; }
     .pp-hero-gallery__grid {
         grid-template-columns: 1fr 1fr;
         grid-template-rows: auto;
@@ -1004,9 +1055,10 @@ fluent-divider {
     gap: 6px;
     color: #ccc;
     text-decoration: none;
-    font-size: 0.82rem;
+    font-size: 0.95rem;
     font-style: normal !important;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+    font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif !important;
+    letter-spacing: 0.04em;
     transition: color 0.2s ease;
 }
 
@@ -1107,7 +1159,7 @@ fluent-divider {
     color: #1a1a1a;
     overflow-y: auto;
     padding: 24px 28px 40px;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+    font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif !important;
     font-style: normal !important;
 }
 
@@ -1155,7 +1207,7 @@ fluent-divider {
     color: #1a1a1a !important;
     line-height: 1.3;
     margin: 0 0 12px 0;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+    font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif !important;
 }
 
 .pp-photo-stats {
@@ -1170,7 +1222,7 @@ fluent-divider {
     font-size: 0.9rem;
     margin-bottom: 20px;
     font-style: normal !important;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+    font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif !important;
 }
 
 .pp-photo-section-label {
@@ -1182,7 +1234,7 @@ fluent-divider {
     font-weight: 600 !important;
     font-style: normal !important;
     display: block;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+    font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif !important;
 }
 
 .pp-photo-poem-block,
@@ -1198,7 +1250,7 @@ fluent-divider {
     font-size: 0.92rem;
     white-space: pre-wrap;
     font-style: italic !important;
-    font-family: 'Georgia', serif !important;
+    font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif !important;
 }
 
 .pp-photo-thoughts {
@@ -1206,7 +1258,7 @@ fluent-divider {
     line-height: 1.7;
     font-size: 0.88rem;
     font-style: normal !important;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+    font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif !important;
 }
 
 /* Poem-only detail view */
@@ -1280,7 +1332,7 @@ fluent-breadcrumb-item::part(link) {
     text-decoration: none !important;
     font-size: 0.75rem !important;
     font-style: italic !important;
-    font-family: 'Georgia', serif !important;
+    font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif !important;
     transition: color 0.2s ease;
 }
 
@@ -1293,7 +1345,7 @@ fluent-breadcrumb-item:last-child {
     font-size: 0.75rem !important;
     color: #888 !important;
     font-style: italic !important;
-    font-family: 'Georgia', serif !important;
+    font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif !important;
 }
 
 fluent-breadcrumb-item::part(separator) {
@@ -1333,7 +1385,7 @@ fluent-breadcrumb-item::part(separator) {
     line-height: 1.15;
     color: #fff !important;
     margin: 0 0 20px 0;
-    font-family: 'Georgia', serif !important;
+    font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif !important;
 }
 
 .pp-detail-description {
@@ -1353,7 +1405,7 @@ fluent-breadcrumb-item::part(separator) {
     font-weight: 400 !important;
     font-style: italic !important;
     display: block;
-    font-family: 'Georgia', serif !important;
+    font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif !important;
 }
 
 .pp-detail-poem-block {
@@ -1366,7 +1418,7 @@ fluent-breadcrumb-item::part(separator) {
     font-size: 1.05rem;
     white-space: pre-wrap;
     font-style: italic !important;
-    font-family: 'Georgia', serif !important;
+    font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif !important;
 }
 
 .pp-detail-note {
@@ -1521,7 +1573,7 @@ html.pp-light .pp-footer {
     font-style: italic !important;
     color: #fff !important;
     margin-bottom: 8px;
-    font-family: 'Georgia', serif !important;
+    font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif !important;
 }
 
 .pp-login-input {
@@ -1530,7 +1582,7 @@ html.pp-light .pp-footer {
     color: #fff;
     padding: 10px 14px;
     font-size: 0.9rem;
-    font-family: 'Georgia', serif;
+    font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
     font-style: italic;
     outline: none;
     transition: border-color 0.2s ease;
@@ -1540,7 +1592,7 @@ html.pp-light .pp-footer {
 
 .pp-login-btn {
     margin-top: 4px;
-    font-family: 'Georgia', serif !important;
+    font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif !important;
     font-style: normal !important;
 }
 
@@ -1712,7 +1764,7 @@ html.pp-light .pp-footer {
     color: #fff;
     padding: 9px 12px;
     font-size: 0.88rem;
-    font-family: 'Georgia', serif;
+    font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
     font-style: italic;
     outline: none;
     width: 100%;
@@ -1787,7 +1839,7 @@ html.pp-light .pp-admin-placeholder { border-color: #d8d0c4; }
 /* ── Compact viewport composition ── */
 @media (min-width: 801px) {
     :root {
-        --header-height: 72px;
+        --header-height: 96px;
         --hero-height: clamp(420px, 56vh, 540px);
     }
 }
@@ -1802,10 +1854,12 @@ html.pp-light .pp-admin-placeholder { border-color: #d8d0c4; }
 /* ── Authentication ── */
 .pp-site-auth-link {
     color: var(--pp-text-muted);
-    font-size: 0.72rem;
+    font-family: var(--font-body);
+    font-size: 0.88rem;
+    letter-spacing: 0.06em;
     text-decoration: none;
     white-space: nowrap;
-    transition: color var(--ease-ui);
+    transition: color 600ms ease;
 }
 
 .pp-site-auth-link:hover { color: var(--pp-text); }
