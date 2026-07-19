@@ -210,6 +210,7 @@ a { color: inherit; }
 .pp-studio-page-actions {
     display: flex;
     justify-content: flex-end;
+    gap: var(--space-3);
     width: 100%;
     max-width: var(--content-max);
     margin: 0 auto;

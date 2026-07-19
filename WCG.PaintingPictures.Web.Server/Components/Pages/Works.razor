@@ -9,6 +9,7 @@
 
 <section class="pp-works">
     <div class="pp-studio-page-actions">
+        <StudioEditLink Href="@NewItemHref" Label="@NewItemLabel" AddIcon="true" />
         <StudioEditLink Href="@CollectionsEditHref" Label="Edit collections" />
     </div>
     <div class="pp-works__intro">
@@ -143,6 +144,14 @@
         $"/works?type={Uri.EscapeDataString(medium)}&collection={Uri.EscapeDataString(selectedSlug)}";
     private string CollectionsEditHref =>
         $"/admin/collections?medium={Uri.EscapeDataString(medium)}&returnUrl={Uri.EscapeDataString(WorksReturnUrl)}";
+    private string NewItemHref =>
+        $"/admin/portfolio?create=true&type={Uri.EscapeDataString(medium)}&returnUrl={Uri.EscapeDataString(WorksReturnUrl)}";
+    private string NewItemLabel => medium switch
+    {
+        PortfolioMedia.Drawing => "Add drawing",
+        PortfolioMedia.Poem => "Add poem",
+        _ => "Upload photograph"
+    };
 
     protected override async Task OnParametersSetAsync()
     {

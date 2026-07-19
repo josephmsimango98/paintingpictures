@@ -163,6 +163,12 @@
     [SupplyParameterFromQuery(Name = "returnUrl")]
     public string? ReturnUrl { get; set; }
 
+    [SupplyParameterFromQuery(Name = "create")]
+    public bool Create { get; set; }
+
+    [SupplyParameterFromQuery(Name = "type")]
+    public string? Type { get; set; }
+
     private IReadOnlyList<PortfolioItem> items = [];
     private PortfolioItem? Editing;
     private bool isLoading = true;
@@ -195,6 +201,10 @@
             if (selected is not null)
                 EditItem(selected);
         }
+        else if (Create)
+        {
+            StartNewItem(Type);
+        }
     }
 
     private static string LocalReturnUrl(string? value) =>
@@ -207,8 +217,16 @@
 
     private void NewItem()
     {
+        StartNewItem(null);
+    }
+
+    private void StartNewItem(string? type)
+    {
         statusMessage = null;
-        Editing = new PortfolioItem();
+        Editing = new PortfolioItem
+        {
+            Type = PortfolioMedia.Normalize(type)
+        };
     }
 
     private void EditItem(PortfolioItem item)
