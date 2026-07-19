@@ -206,6 +206,72 @@ a { color: inherit; }
 
 .pp-text-link:hover { border-bottom-color: var(--pp-accent); }
 
+/* ── Contextual Studio controls ── */
+.pp-studio-page-actions {
+    display: flex;
+    justify-content: flex-end;
+    width: 100%;
+    max-width: var(--content-max);
+    margin: 0 auto;
+    padding: var(--space-4) var(--content-pad) var(--space-3);
+}
+
+.pp-studio-page-actions:empty {
+    display: none;
+}
+
+.pp-studio-edit-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    min-height: 34px;
+    padding: 7px 12px;
+    border: 1px solid var(--pp-accent);
+    border-radius: 2px;
+    color: var(--pp-accent);
+    background: color-mix(in srgb, var(--pp-accent) 7%, transparent);
+    font-family: var(--font-body);
+    font-size: var(--text-label);
+    font-weight: 600;
+    line-height: 1;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: color var(--ease-ui), background-color var(--ease-ui);
+}
+
+.pp-studio-edit-link:hover {
+    color: var(--pp-bg);
+    background: var(--pp-accent);
+}
+
+.pp-photo-viewer-actions,
+.pp-poem-view-top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.pp-photo-viewer-top .pp-studio-edit-link {
+    min-height: 30px;
+    color: #d5ad62;
+    border-color: #8d6a2e;
+    background: rgba(13, 13, 13, 0.72);
+}
+
+.pp-photo-viewer-top .pp-studio-edit-link:hover {
+    color: #0d0d0d;
+    background: #d5ad62;
+}
+
+.pp-poem-view-top {
+    justify-content: space-between;
+    padding-right: 24px;
+}
+
+.pp-poem-view-top .pp-photo-back--poem {
+    padding-right: 0;
+}
+
 /* ── Site header (editorial / gallery) ── */
 .pp-site-header {
     position: relative;

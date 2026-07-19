@@ -12,7 +12,7 @@
         <h2 class="pp-admin-title">Portfolio items</h2>
         <div class="pp-admin-header-actions">
             <button type="button" class="pp-btn pp-btn--accent" @onclick="NewItem" disabled="@isBusy">New item</button>
-            <a href="/admin" class="pp-admin-back">← Dashboard</a>
+            <a href="@BackHref" class="pp-admin-back">← Back to site</a>
         </div>
     </div>
 
@@ -157,6 +157,12 @@
 </div>
 
 @code {
+    [SupplyParameterFromQuery(Name = "itemId")]
+    public int? ItemId { get; set; }
+
+    [SupplyParameterFromQuery(Name = "returnUrl")]
+    public string? ReturnUrl { get; set; }
+
     private IReadOnlyList<PortfolioItem> items = [];
     private PortfolioItem? Editing;
     private bool isLoading = true;
@@ -165,6 +171,7 @@
     private string? statusMessage;
     private bool statusIsError;
     private const long MaxUploadBytes = 10 * 1024 * 1024;
+    private string BackHref => LocalReturnUrl(ReturnUrl);
 
     protected override async Task OnInitializedAsync()
     {
@@ -181,7 +188,22 @@
         {
             isLoading = false;
         }
+
+        if (ItemId is int itemId)
+        {
+            var selected = items.FirstOrDefault(x => x.Id == itemId);
+            if (selected is not null)
+                EditItem(selected);
+        }
     }
+
+    private static string LocalReturnUrl(string? value) =>
+        !string.IsNullOrWhiteSpace(value)
+        && value.StartsWith('/')
+        && !value.StartsWith("//")
+        && !value.StartsWith("/\\")
+            ? value
+            : "/";
 
     private void NewItem()
     {

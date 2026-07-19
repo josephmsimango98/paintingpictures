@@ -13,7 +13,7 @@
         <h2 class="pp-admin-title">Hero gallery</h2>
         <div class="pp-admin-header-actions">
             <button type="button" class="pp-btn pp-btn--accent" @onclick="Save" disabled="@isBusy">Save</button>
-            <a href="/admin" class="pp-admin-back">← Dashboard</a>
+            <a href="@BackHref" class="pp-admin-back">← Back to site</a>
         </div>
     </div>
 
@@ -114,6 +114,19 @@
 </div>
 
 @code {
+    [SupplyParameterFromQuery(Name = "returnUrl")]
+    public string? ReturnUrl { get; set; }
+
+    private string BackHref => LocalReturnUrl(ReturnUrl);
+
+    private static string LocalReturnUrl(string? value) =>
+        !string.IsNullOrWhiteSpace(value)
+        && value.StartsWith('/')
+        && !value.StartsWith("//")
+        && !value.StartsWith("/\\")
+            ? value
+            : "/";
+
     private sealed record PresetOption(string Key, string Title, string Description);
 
     private readonly IReadOnlyList<PresetOption> presets =

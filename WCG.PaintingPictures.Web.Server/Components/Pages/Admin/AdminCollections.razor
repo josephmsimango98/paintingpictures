@@ -10,12 +10,18 @@
 
 <div class="pp-admin-page">
     <div class="pp-admin-header">
-        <h1 class="pp-admin-title">Collections</h1>
+        <h1 class="pp-admin-title">
+            Collections
+            @if (!string.IsNullOrWhiteSpace(Medium))
+            {
+                <small>· @PortfolioMedia.PluralLabel(Medium)</small>
+            }
+        </h1>
         <div class="pp-admin-header-actions">
             <button type="button" class="pp-btn pp-btn--accent" @onclick="NewCollection" disabled="@isBusy">
                 New collection
             </button>
-            <a href="/admin" class="pp-admin-back">← Dashboard</a>
+            <a href="@BackHref" class="pp-admin-back">← Back to site</a>
         </div>
     </div>
 
@@ -129,7 +135,7 @@
     {
         <p class="pp-admin-placeholder-body">Loading collections…</p>
     }
-    else if (collections.Count == 0)
+    else if (VisibleCollections.Count == 0)
     {
         <div class="pp-admin-placeholder">
             <p class="pp-admin-placeholder-title">No custom collections yet</p>
@@ -152,7 +158,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var collection in collections)
+                    @foreach (var collection in VisibleCollections)
                     {
                         var captured = collection;
                         <tr>
@@ -190,6 +196,12 @@
 </div>
 
 @code {
+    [SupplyParameterFromQuery(Name = "medium")]
+    public string? Medium { get; set; }
+
+    [SupplyParameterFromQuery(Name = "returnUrl")]
+    public string? ReturnUrl { get; set; }
+
     private IReadOnlyList<PortfolioCollection> collections = [];
     private IReadOnlyList<PortfolioItem> items = [];
     private readonly HashSet<int> selectedIds = [];
@@ -198,6 +210,14 @@
     private bool isBusy;
     private string? statusMessage;
     private bool statusIsError;
+    private string BackHref => LocalReturnUrl(ReturnUrl);
+
+    private IReadOnlyList<PortfolioCollection> VisibleCollections =>
+        string.IsNullOrWhiteSpace(Medium)
+            ? collections
+            : collections
+                .Where(x => x.Medium.Equals(PortfolioMedia.Normalize(Medium), StringComparison.OrdinalIgnoreCase))
+                .ToList();
 
     private IReadOnlyList<PortfolioItem> EligibleItems =>
         Editing is null
@@ -229,11 +249,19 @@
         selectedIds.Clear();
         Editing = new PortfolioCollection
         {
-            Medium = PortfolioMedia.Photograph,
+            Medium = PortfolioMedia.Normalize(Medium),
             SortOrder = collections.Count
         };
         statusMessage = null;
     }
+
+    private static string LocalReturnUrl(string? value) =>
+        !string.IsNullOrWhiteSpace(value)
+        && value.StartsWith('/')
+        && !value.StartsWith("//")
+        && !value.StartsWith("/\\")
+            ? value
+            : "/";
 
     private void Edit(PortfolioCollection collection)
     {
