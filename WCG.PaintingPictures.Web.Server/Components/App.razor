@@ -14,6 +14,34 @@
     <ImportMap />
     <link rel="icon" type="image/png" href="favicon.png" />
     <HeadOutlet @rendermode="new InteractiveServerRenderMode(prerender: false)" />
+    <script>
+        (function () {
+            var key = 'pp-theme';
+            function systemIsLight() {
+                return window.matchMedia('(prefers-color-scheme: light)').matches;
+            }
+            function resolve() {
+                var stored = localStorage.getItem(key);
+                if (stored === 'light') return true;
+                if (stored === 'dark') return false;
+                return systemIsLight();
+            }
+            function apply(light) {
+                document.documentElement.classList.toggle('pp-light', !!light);
+            }
+            window.ppGetTheme = function () { return resolve(); };
+            window.ppSetTheme = function (light) {
+                localStorage.setItem(key, light ? 'light' : 'dark');
+                apply(light);
+                return !!light;
+            };
+            apply(resolve());
+            window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', function () {
+                if (!localStorage.getItem(key))
+                    apply(systemIsLight());
+            });
+        })();
+    </script>
 </head>
 
 <body>
@@ -21,7 +49,6 @@
     <ReconnectModal />
     <script src="_content/Microsoft.FluentUI.AspNetCore.Components/Microsoft.FluentUI.AspNetCore.Components.lib.module.js" type="module" async></script>
     <script src="@Assets["_framework/blazor.web.js"]"></script>
-    <script>window.ppSetTheme = function(light) { document.documentElement.classList.toggle('pp-light', light); };</script>
     <script>
         window.ppToggleFullscreen = function(elId) {
             var el = document.getElementById(elId);

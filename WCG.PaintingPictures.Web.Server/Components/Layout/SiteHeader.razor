@@ -1,4 +1,5 @@
 @inject IJSRuntime JS
+@inject NavigationManager Navigation
 
 <header class="pp-site-header">
     <div class="pp-site-header__inner">
@@ -12,54 +13,74 @@
                     <path d="M3 5.5h14M3 10h14M3 14.5h14" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
                 </svg>
             </button>
-        </div>
 
-        <a href="/" class="pp-site-brand">
-            <span class="pp-site-brand__mark">
+            <a href="/" class="pp-site-brand">
                 <img src="images/mimic-logo.png" alt="" class="pp-site-brand__logo" />
-                <span class="pp-site-brand__title">The Irony</span>
-            </span>
-            <span class="pp-site-brand__tagline">photographs · drawings · poems</span>
-        </a>
+                <span class="pp-site-brand__copy">
+                    <span class="pp-site-brand__title">The Irony</span>
+                    <span class="pp-site-brand__tagline">Photographs · Drawings · Poems</span>
+                </span>
+            </a>
+        </div>
 
         <div class="pp-site-header__right">
             <nav class="pp-site-nav" aria-label="Primary">
-                <a href="/works" class="pp-site-nav__link">Collections</a>
-                <a href="/about" class="pp-site-nav__link">About</a>
-                <a href="/contact" class="pp-site-nav__link">Contact</a>
+                <a href="/works" class="pp-site-nav__link @(IsActive("/works") ? "is-active" : null)">Collections</a>
+                <a href="/about" class="pp-site-nav__link @(IsActive("/about") ? "is-active" : null)">About</a>
+                <a href="/contact" class="pp-site-nav__link @(IsActive("/contact") ? "is-active" : null)">Contact</a>
             </nav>
 
-            <div class="pp-site-header__actions">
-                <button type="button"
-                        class="pp-icon-btn pp-site-header__theme"
-                        title="@(IsLight ? "Switch to dark" : "Switch to light")"
-                        aria-label="Toggle theme"
-                        @onclick="ToggleTheme">
-                    @if (IsLight)
-                    {
-                        <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-                            <path d="M8.003 1C11.868 1.001 15.002 4.134 15.002 8c0 3.866-3.134 7-7 7a7.01 7.01 0 0 1-6.464-4.309.75.75 0 0 1 .474-.857A6.004 6.004 0 0 0 8.002 4a6 6 0 0 0-.46-2.308.75.75 0 0 1 .461-.692Z"/>
-                        </svg>
-                    }
-                    else
-                    {
-                        <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-                            <path d="M8 1.5a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-1 0V2a.5.5 0 0 1 .5-.5Zm0 11a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-1 0v-1a.5.5 0 0 1 .5-.5ZM2 7.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5Zm10.5 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5ZM8 5a3 3 0 1 1 0 6 3 3 0 0 1 0-6Z"/>
-                        </svg>
-                    }
-                </button>
+            <span class="pp-site-header__rule" aria-hidden="true"></span>
 
-                <AuthorizeView>
-                    <Authorized>
-                        <a href="/api/auth/logout" class="pp-site-auth-link" title="@context.User.Identity?.Name">
-                            @(context.User.Identity?.Name?.Split('@')[0] ?? "Account")
-                        </a>
-                    </Authorized>
-                    <NotAuthorized>
-                        <a href="/login" class="pp-site-auth-link">Sign in</a>
-                    </NotAuthorized>
-                </AuthorizeView>
-            </div>
+            <button type="button"
+                    class="pp-icon-btn pp-site-header__theme"
+                    title="@(IsLight ? "Switch to dark" : "Switch to light")"
+                    aria-label="Toggle theme"
+                    @onclick="ToggleTheme">
+                @if (IsLight)
+                {
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                        <circle cx="8" cy="8" r="3.25" stroke="currentColor" stroke-width="1.3"/>
+                        <path d="M8 1.25v1.5M8 13.25v1.5M1.25 8h1.5M13.25 8h1.5M3.05 3.05l1.06 1.06M11.89 11.89l1.06 1.06M3.05 12.95l1.06-1.06M11.89 4.11l1.06-1.06" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+                    </svg>
+                }
+                else
+                {
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                        <path d="M13.2 9.35A5.75 5.75 0 0 1 6.65 2.8 5.75 5.75 0 1 0 13.2 9.35Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+                    </svg>
+                }
+            </button>
+
+            <span class="pp-site-header__rule" aria-hidden="true"></span>
+
+            <AuthorizeView>
+                <Authorized>
+                    <a href="/api/auth/logout" class="pp-site-account" title="@context.User.Identity?.Name">
+                        <span class="pp-site-account__avatar" aria-hidden="true">
+                            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                                <circle cx="8" cy="5.5" r="2.4" stroke="currentColor" stroke-width="1.3"/>
+                                <path d="M3.2 13.2c.7-2.2 2.4-3.4 4.8-3.4s4.1 1.2 4.8 3.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+                            </svg>
+                        </span>
+                        <span class="pp-site-account__name">@(context.User.Identity?.Name?.Split('@')[0] ?? "Account")</span>
+                        <svg class="pp-site-account__chevron" width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+                            <path d="M2 3.5 5 6.5 8 3.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </a>
+                </Authorized>
+                <NotAuthorized>
+                    <a href="/login" class="pp-site-account">
+                        <span class="pp-site-account__avatar" aria-hidden="true">
+                            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                                <circle cx="8" cy="5.5" r="2.4" stroke="currentColor" stroke-width="1.3"/>
+                                <path d="M3.2 13.2c.7-2.2 2.4-3.4 4.8-3.4s4.1 1.2 4.8 3.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+                            </svg>
+                        </span>
+                        <span class="pp-site-account__name">Sign in</span>
+                    </a>
+                </NotAuthorized>
+            </AuthorizeView>
         </div>
     </div>
 
@@ -78,9 +99,9 @@
             <nav class="pp-drawer__nav">
                 <a href="/" @onclick="CloseMenu">Home</a>
                 <a href="/works" @onclick="CloseMenu">Collections</a>
-                <a href="/works?type=photograph" @onclick="CloseMenu">Studies</a>
-                <a href="/works?type=drawing" @onclick="CloseMenu">Observations</a>
-                <a href="/works?type=poem" @onclick="CloseMenu">Fragments</a>
+                <a href="/works?type=photograph" @onclick="CloseMenu">Photographs</a>
+                <a href="/works?type=drawing" @onclick="CloseMenu">Drawings</a>
+                <a href="/works?type=poem" @onclick="CloseMenu">Poems</a>
                 <a href="/about" @onclick="CloseMenu">About</a>
                 <a href="/contact" @onclick="CloseMenu">Contact</a>
                 <AuthorizeView Roles="admin">
@@ -104,9 +125,31 @@
 @code {
     private bool IsLight;
     private bool menuOpen;
+    private bool themeReady;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || themeReady)
+            return;
+
+        try
+        {
+            IsLight = await JS.InvokeAsync<bool>("ppGetTheme");
+            themeReady = true;
+            StateHasChanged();
+        }
+        catch (JSException)
+        {
+            // Theme script may not be available during disconnect; keep current state.
+        }
+    }
 
     private void ToggleMenu() => menuOpen = !menuOpen;
     private void CloseMenu() => menuOpen = false;
+
+    private bool IsActive(string path) =>
+        Navigation.ToBaseRelativePath(Navigation.Uri)
+            .StartsWith(path.TrimStart('/'), StringComparison.OrdinalIgnoreCase);
 
     private async Task ToggleTheme()
     {

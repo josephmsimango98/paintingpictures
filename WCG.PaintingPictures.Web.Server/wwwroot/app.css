@@ -45,7 +45,7 @@ html.pp-light {
     --pp-surface: #ebe6dc;
     --pp-text: #1a1814;
     --pp-text-muted: #5c564e;
-    --pp-accent: #9a6f2e;
+    --pp-accent: #b68a3c;
     --pp-border: rgba(26, 24, 20, 0.1);
     --pp-border-strong: rgba(26, 24, 20, 0.18);
     --pp-danger: #9a4034;
@@ -81,6 +81,8 @@ html, body {
     min-height: 100vh;
     color: var(--pp-text);
     font-family: var(--font-body);
+    display: flex;
+    flex-direction: column;
 }
 
 .portfolio-root h1,
@@ -213,14 +215,14 @@ a { color: inherit; }
 }
 
 .pp-site-header__inner {
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
+    display: flex;
     align-items: center;
+    justify-content: space-between;
     min-height: var(--header-height);
     max-width: var(--content-max);
     margin: 0 auto;
     width: 100%;
-    padding: 28px var(--content-pad);
+    padding: 20px var(--content-pad);
     gap: var(--space-5);
 }
 
@@ -228,31 +230,34 @@ a { color: inherit; }
     display: flex;
     align-items: center;
     justify-content: flex-start;
+    gap: var(--space-3);
+    min-width: 0;
 }
 
 .pp-site-header__right {
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    gap: 40px;
+    gap: 24px;
+    flex-shrink: 0;
+}
+
+.pp-site-header__rule {
+    width: 1px;
+    height: 18px;
+    background: var(--pp-border-strong);
+    flex-shrink: 0;
 }
 
 .pp-site-brand {
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    text-decoration: none;
-    color: var(--pp-text);
-    animation: pp-fade-in 800ms ease both;
-}
-
-.pp-site-brand__mark {
-    display: inline-flex;
     flex-direction: row;
     align-items: center;
     gap: 14px;
-    line-height: 1;
+    text-decoration: none;
+    color: var(--pp-text);
+    min-width: 0;
+    animation: pp-fade-in 800ms ease both;
 }
 
 .pp-site-brand__logo {
@@ -266,64 +271,119 @@ a { color: inherit; }
 
 html.pp-light .pp-site-brand__logo { filter: none; }
 
+.pp-site-brand__copy {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    min-width: 0;
+}
+
 .pp-site-brand__title {
     font-family: var(--font-display);
-    font-size: clamp(1.85rem, 2.4vw, 2.15rem);
+    font-size: clamp(1.65rem, 2.2vw, 2rem);
     font-weight: 500;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.01em;
     line-height: 1;
     white-space: nowrap;
 }
 
 .pp-site-brand__tagline {
     font-family: var(--font-body);
-    font-size: 0.88rem;
+    font-size: 0.72rem;
     font-weight: 500;
-    font-style: italic;
-    letter-spacing: 0.06em;
+    font-style: normal;
+    letter-spacing: 0.04em;
     text-transform: none;
     color: var(--pp-text-muted);
-    line-height: 1.3;
-    text-align: center;
+    line-height: 1.2;
+    text-align: left;
+    white-space: nowrap;
 }
 
 .pp-site-nav {
     display: flex;
     align-items: center;
-    gap: 36px;
+    gap: 28px;
 }
 
 .pp-site-nav__link {
     font-family: var(--font-body);
     font-size: var(--text-label);
     font-weight: 500;
-    letter-spacing: 0.02em;
-    color: var(--pp-text-muted);
+    letter-spacing: 0.01em;
+    color: var(--pp-text);
     text-decoration: none;
-    transition: color 600ms ease;
+    padding-bottom: 4px;
+    border-bottom: 1px solid transparent;
+    transition: color var(--ease-ui), border-color var(--ease-ui);
 }
 
-.pp-site-nav__link:hover { color: var(--pp-text); }
+.pp-site-nav__link:hover {
+    color: var(--pp-accent);
+}
 
-.pp-site-header__actions {
-    display: flex;
-    align-items: center;
-    gap: 16px;
+.pp-site-nav__link.is-active {
+    color: var(--pp-text);
+    border-bottom-color: var(--pp-accent);
 }
 
 .pp-site-header__theme {
     width: 36px;
     height: 36px;
-    opacity: 0.75;
-    transition: opacity 600ms ease, color 600ms ease;
+    color: var(--pp-accent);
+    opacity: 1;
+    transition: color var(--ease-ui), opacity var(--ease-ui);
 }
 
-.pp-site-header__theme:hover { opacity: 1; }
+.pp-site-header__theme:hover {
+    color: var(--pp-text);
+}
+
+.pp-site-account {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: var(--pp-text);
+    font-family: var(--font-body);
+    font-size: var(--text-label);
+    font-weight: 500;
+    transition: color var(--ease-ui);
+}
+
+.pp-site-account:hover {
+    color: var(--pp-accent);
+}
+
+.pp-site-account__avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: 1px solid var(--pp-accent);
+    border-radius: 50%;
+    color: var(--pp-accent);
+}
+
+.pp-site-account__name {
+    max-width: 10ch;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.pp-site-account__chevron {
+    color: var(--pp-accent);
+    flex-shrink: 0;
+}
 
 .pp-site-header__menu {
     width: 36px;
     height: 36px;
     opacity: 0.8;
+    flex-shrink: 0;
     transition: opacity 600ms ease, color 600ms ease;
 }
 
@@ -820,6 +880,7 @@ html.pp-light .pp-hero-card--poem { background: #1a1814; }
     border-top: 1px solid var(--pp-border);
     background: var(--surface-raised);
     padding: var(--space-7) var(--space-5) var(--space-6);
+    margin-top: auto;
 }
 
 .pp-site-footer__inner {
@@ -957,12 +1018,16 @@ html.pp-light .pp-hero-card--poem { background: #1a1814; }
 @media (max-width: 800px) {
     .pp-site-nav { display: none; }
     .pp-site-header__inner {
-        padding: 20px var(--space-3);
-        min-height: 84px;
+        padding: 16px var(--content-pad);
+        min-height: 72px;
     }
-    .pp-site-brand__title { font-size: 1.7rem; }
-    .pp-site-brand__logo { width: 30px; height: 30px; }
-    .pp-site-brand__tagline { font-size: 0.78rem; letter-spacing: 0.04em; }
+    .pp-site-brand__title { font-size: 1.45rem; }
+    .pp-site-brand__logo { width: 28px; height: 28px; }
+    .pp-site-brand__tagline { font-size: 0.62rem; letter-spacing: 0.03em; }
+    .pp-site-header__rule { display: none; }
+    .pp-site-account__name { display: none; }
+    .pp-site-account__chevron { display: none; }
+    .pp-site-header__right { gap: 12px; }
     .pp-hero-gallery__grid,
     .pp-hero-gallery--editorial .pp-hero-gallery__grid,
     .pp-hero-gallery--balanced .pp-hero-gallery__grid,
@@ -2364,7 +2429,6 @@ html.pp-light .pp-admin-placeholder { border-color: transparent; }
 }
 
 @media (max-width: 800px) {
-    .pp-site-auth-link { display: none; }
     .pp-login-form { padding: var(--space-4); }
 }
 
