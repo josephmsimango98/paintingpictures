@@ -1,6 +1,6 @@
-@inject PortfolioService PortfolioService
+@inject HeroGalleryService HeroGalleryService
 
-<section class="pp-hero-gallery" aria-label="Featured collections">
+<section class="pp-hero-gallery pp-hero-gallery--@layoutKey" aria-label="Featured collections">
     <div class="pp-hero-gallery__grid">
         @foreach (var panel in panels)
         {
@@ -59,52 +59,84 @@
         bool IsPoem = false,
         string? Quote = null);
 
+    private string layoutKey = HeroLayoutKeys.Editorial;
     private List<HeroPanel> panels = [];
 
     protected override async Task OnInitializedAsync()
     {
-        var items = await PortfolioService.LoadAsync();
-        var photographs = items.Where(i => i.Type == "photograph" && i.HasImage).ToList();
-        var drawings = items.Where(i => i.Type == "drawing" && i.HasImage).ToList();
-        var poem = items.FirstOrDefault(i => i.Type == "poem");
-        var featured = photographs.ElementAtOrDefault(0) ?? items.FirstOrDefault(i => i.HasImage);
-        var drawing = drawings.ElementAtOrDefault(0);
-        var photography = photographs.ElementAtOrDefault(1) ?? photographs.ElementAtOrDefault(0);
-
-        var poemLines = poem?.Poem?
-            .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Take(3)
-            .ToArray() ?? ["I am learning to sit with silence."];
-
-        panels =
-        [
-            new HeroPanel(
-                featured?.Type == "drawing" ? "Drawings" : "Portraits",
-                featured?.Description?.Split('.')[0] ?? "A study in light and presence",
-                featured?.Image,
-                featured is null ? "/works?type=photograph" : $"/item/{featured.Id}",
-                "pp-hero-card--featured",
-                IsFeatured: true),
-            new HeroPanel(
-                "Poems",
-                "Words held in silence",
-                null,
-                poem is null ? "/works?type=poem" : $"/item/{poem.Id}",
-                "pp-hero-card--poem-span",
-                IsPoem: true,
-                Quote: string.Join("\n", poemLines)),
-            new HeroPanel(
-                "Drawings",
-                "Form through line and gesture",
-                drawing?.Image,
-                drawing is null ? "/works?type=drawing" : $"/item/{drawing.Id}",
-                "pp-hero-card--drawing"),
-            new HeroPanel(
-                "Photography",
-                "Moments held still",
-                photography?.Image,
-                "/works?type=photograph",
-                "pp-hero-card--photo")
-        ];
+        var config = await HeroGalleryService.GetConfigAsync();
+        layoutKey = HeroLayoutKeys.Normalize(config.LayoutKey);
+        panels = config.Slots
+            .OrderBy(x => x.SortOrder)
+            .Select(ToPanel)
+            .ToList();
     }
+
+    private static HeroPanel ToPanel(HeroGallerySlotAssignment slot)
+    {
+        var item = slot.Item;
+        var isFeatured = slot.SlotKey == HeroSlotKeys.Featured;
+        var modifier = HeroSlotKeys.CssModifier(slot.SlotKey);
+
+        if (item is null)
+        {
+            return new HeroPanel(
+                Title: SlotFallbackTitle(slot.SlotKey),
+                Description: "A work from the collection",
+                Image: null,
+                Href: FallbackHref(slot.SlotKey),
+                ModifierClass: modifier,
+                IsFeatured: isFeatured);
+        }
+
+        if (item.Type == "poem")
+        {
+            var poemLines = item.Poem?
+                .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Take(3)
+                .ToArray() ?? ["I am learning to sit with silence."];
+
+            return new HeroPanel(
+                Title: item.Title,
+                Description: item.Description ?? "Words held in silence",
+                Image: null,
+                Href: $"/item/{item.Id}",
+                ModifierClass: modifier,
+                IsFeatured: isFeatured,
+                IsPoem: true,
+                Quote: string.Join("\n", poemLines));
+        }
+
+        return new HeroPanel(
+            Title: TitleFor(item),
+            Description: item.Description?.Split('.')[0] ?? "A study in light and presence",
+            Image: item.Image,
+            Href: $"/item/{item.Id}",
+            ModifierClass: modifier,
+            IsFeatured: isFeatured);
+    }
+
+    private static string TitleFor(PortfolioItem item) => item.Type switch
+    {
+        "drawing" => string.IsNullOrWhiteSpace(item.Title) ? "Drawings" : item.Title,
+        "photograph" => string.IsNullOrWhiteSpace(item.Title) ? "Photography" : item.Title,
+        _ => item.Title
+    };
+
+    private static string SlotFallbackTitle(string slotKey) => slotKey switch
+    {
+        HeroSlotKeys.Featured => "Featured",
+        HeroSlotKeys.Secondary => "Collection",
+        HeroSlotKeys.Tertiary => "Drawings",
+        HeroSlotKeys.Quaternary => "Photography",
+        _ => "Collection"
+    };
+
+    private static string FallbackHref(string slotKey) => slotKey switch
+    {
+        HeroSlotKeys.Tertiary => "/works?type=drawing",
+        HeroSlotKeys.Quaternary => "/works?type=photograph",
+        HeroSlotKeys.Secondary => "/works?type=poem",
+        _ => "/works"
+    };
 }

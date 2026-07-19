@@ -11,7 +11,7 @@
     <div class="pp-admin-header">
         <h2 class="pp-admin-title">Portfolio items</h2>
         <div class="pp-admin-header-actions">
-            <FluentButton Appearance="Appearance.Accent" @onclick="NewItem" Disabled="@isBusy">+ New item</FluentButton>
+            <button type="button" class="pp-btn pp-btn--accent" @onclick="NewItem" disabled="@isBusy">New item</button>
             <a href="/admin" class="pp-admin-back">← Dashboard</a>
         </div>
     </div>
@@ -26,55 +26,78 @@
         <div class="pp-admin-form-wrap">
             <h3 class="pp-admin-form-title">@(Editing.Id == 0 ? "New item" : "Edit item")</h3>
             <div class="pp-admin-form">
-                <label class="pp-admin-label">Title</label>
-                <input class="pp-admin-input" @bind="Editing.Title" placeholder="Title" />
-
-                <label class="pp-admin-label">Type</label>
-                <select class="pp-admin-input" @bind="Editing.Type">
-                    <option value="photograph">Photograph</option>
-                    <option value="drawing">Drawing</option>
-                    <option value="poem">Poem</option>
-                </select>
-
-                <label class="pp-admin-label">Upload picture</label>
-                <div class="pp-admin-upload">
-                    <InputFile OnChange="OnImageSelected" accept="image/jpeg,image/png,image/webp,image/gif" />
-                    @if (isUploading)
-                    {
-                        <span class="pp-admin-upload-status">Uploading…</span>
-                    }
-                </div>
-
-                <label class="pp-admin-label">Image URL</label>
-                <input class="pp-admin-input" @bind="Editing.Image" placeholder="https://... or upload above" />
-
-                @if (!string.IsNullOrEmpty(Editing.Image))
-                {
-                    <label class="pp-admin-label">Preview</label>
-                    <div class="pp-admin-preview">
-                        <img src="@Editing.Image" alt="Preview" />
+                <fieldset class="pp-admin-fieldset">
+                    <legend class="pp-admin-fieldset__legend">General</legend>
+                    <div class="pp-admin-field-row">
+                        <div class="pp-admin-field">
+                            <label class="pp-admin-label">Title</label>
+                            <input class="pp-admin-input" @bind="Editing.Title" placeholder="Title" />
+                        </div>
+                        <div class="pp-admin-field">
+                            <label class="pp-admin-label">Type</label>
+                            <select class="pp-admin-input" @bind="Editing.Type">
+                                <option value="photograph">Photograph</option>
+                                <option value="drawing">Drawing</option>
+                                <option value="poem">Poem</option>
+                            </select>
+                        </div>
                     </div>
-                }
+                    <div class="pp-admin-field">
+                        <label class="pp-admin-label">Description</label>
+                        <textarea class="pp-admin-input pp-admin-textarea" @bind="Editing.Description" placeholder="Short description"></textarea>
+                    </div>
+                </fieldset>
 
-                <label class="pp-admin-label">Image dimensions</label>
-                <div class="pp-admin-dimensions">
-                    <input class="pp-admin-input" type="number" min="1" @bind="Editing.ImageWidth" aria-label="Image width" />
-                    <span>×</span>
-                    <input class="pp-admin-input" type="number" min="1" @bind="Editing.ImageHeight" aria-label="Image height" />
-                </div>
+                <fieldset class="pp-admin-fieldset">
+                    <legend class="pp-admin-fieldset__legend">Media</legend>
+                    <div class="pp-admin-field">
+                        <label class="pp-admin-label">Upload picture</label>
+                        <div class="pp-admin-upload">
+                            <InputFile OnChange="OnImageSelected" accept="image/jpeg,image/png,image/webp,image/gif" />
+                            @if (isUploading)
+                            {
+                                <span class="pp-admin-upload-status">Uploading…</span>
+                            }
+                        </div>
+                    </div>
+                    <div class="pp-admin-field">
+                        <label class="pp-admin-label">Image URL</label>
+                        <input class="pp-admin-input" @bind="Editing.Image" placeholder="https://… or upload above" />
+                    </div>
+                    @if (!string.IsNullOrEmpty(Editing.Image))
+                    {
+                        <div class="pp-admin-field">
+                            <label class="pp-admin-label">Preview</label>
+                            <div class="pp-admin-preview">
+                                <img src="@Editing.Image" alt="Preview" />
+                            </div>
+                        </div>
+                    }
+                    <div class="pp-admin-field">
+                        <label class="pp-admin-label">Image dimensions</label>
+                        <div class="pp-admin-dimensions">
+                            <input class="pp-admin-input" type="number" min="1" @bind="Editing.ImageWidth" aria-label="Image width" />
+                            <span>×</span>
+                            <input class="pp-admin-input" type="number" min="1" @bind="Editing.ImageHeight" aria-label="Image height" />
+                        </div>
+                    </div>
+                </fieldset>
 
-                <label class="pp-admin-label">Description</label>
-                <textarea class="pp-admin-input pp-admin-textarea" @bind="Editing.Description" placeholder="Description"></textarea>
-
-                <label class="pp-admin-label">Poem</label>
-                <textarea class="pp-admin-input pp-admin-textarea" @bind="Editing.Poem" placeholder="Poem text"></textarea>
-
-                <label class="pp-admin-label">Thoughts</label>
-                <textarea class="pp-admin-input pp-admin-textarea" @bind="Editing.Thoughts" placeholder="Thoughts"></textarea>
+                <fieldset class="pp-admin-fieldset">
+                    <legend class="pp-admin-fieldset__legend">Writing</legend>
+                    <div class="pp-admin-field">
+                        <label class="pp-admin-label">Poem</label>
+                        <textarea class="pp-admin-input pp-admin-textarea" @bind="Editing.Poem" placeholder="Poem text"></textarea>
+                    </div>
+                    <div class="pp-admin-field">
+                        <label class="pp-admin-label">Thoughts</label>
+                        <textarea class="pp-admin-input pp-admin-textarea" @bind="Editing.Thoughts" placeholder="Notes and thoughts"></textarea>
+                    </div>
+                </fieldset>
 
                 <div class="pp-admin-form-actions">
-                    <FluentButton Appearance="Appearance.Accent" @onclick="SaveItem" Disabled="@(isBusy || isUploading)">Save</FluentButton>
-                    <FluentButton Appearance="Appearance.Neutral" @onclick="CancelEdit" Disabled="@isBusy">Cancel</FluentButton>
+                    <button type="button" class="pp-btn pp-btn--accent" @onclick="SaveItem" disabled="@(isBusy || isUploading)">Save</button>
+                    <button type="button" class="pp-btn" @onclick="CancelEdit" disabled="@isBusy">Cancel</button>
                 </div>
             </div>
         </div>
@@ -97,10 +120,10 @@
             <table class="pp-admin-table">
                 <thead>
                     <tr>
-                        <th>ID</th>
+                        <th>Preview</th>
                         <th>Title</th>
-                        <th>Type</th>
-                        <th>Actions</th>
+                        <th>Category</th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -108,12 +131,21 @@
                     {
                         var captured = item;
                         <tr>
-                            <td class="pp-admin-td-id">@captured.Id</td>
-                            <td>@captured.Title</td>
+                            <td class="pp-admin-td-thumb">
+                                @if (captured.HasImage)
+                                {
+                                    <img src="@captured.Image" alt="" class="pp-admin-thumb" />
+                                }
+                                else
+                                {
+                                    <span class="pp-admin-thumb pp-admin-thumb--empty">—</span>
+                                }
+                            </td>
+                            <td class="pp-admin-td-title">@captured.Title</td>
                             <td><span class="pp-type-badge">@captured.TypeLabel</span></td>
                             <td class="pp-admin-td-actions">
-                                <FluentButton Appearance="Appearance.Outline" @onclick="() => EditItem(captured)">Edit</FluentButton>
-                                <FluentButton Appearance="Appearance.Outline" @onclick="() => DeleteItem(captured.Id)" class="pp-admin-btn-danger">Delete</FluentButton>
+                                <button type="button" class="pp-btn pp-btn--sm" @onclick="() => EditItem(captured)">Edit</button>
+                                <button type="button" class="pp-btn pp-btn--sm pp-btn--danger" @onclick="() => DeleteItem(captured.Id)">Delete</button>
                                 <a href="/item/@captured.Id" class="pp-admin-view-link">View</a>
                             </td>
                         </tr>

@@ -92,7 +92,7 @@ public class PortfolioService
         {
             var remoteItems = await _supabase.GetItemsAsync(cancellationToken);
             _items.Clear();
-            _items.AddRange(remoteItems);
+            _items.AddRange(remoteItems.Where(x => x is not null));
         }
         catch
         {

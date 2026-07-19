@@ -56,6 +56,55 @@ public sealed class SupabaseDataService
             "return=minimal",
             cancellationToken);
 
+    public async Task<HeroGallerySettingsRow?> GetHeroSettingsAsync(CancellationToken cancellationToken = default)
+    {
+        var rows = await GetAsync<HeroGallerySettingsRow>(
+            "hero_gallery_settings?id=eq.1&select=*&limit=1",
+            cancellationToken);
+        return rows.FirstOrDefault();
+    }
+
+    public async Task<IReadOnlyList<HeroGallerySlotRow>> GetHeroSlotsAsync(
+        CancellationToken cancellationToken = default) =>
+        await GetAsync<HeroGallerySlotRow>(
+            "hero_gallery_slots?select=*&order=sort_order.asc",
+            cancellationToken);
+
+    public async Task SaveHeroConfigAsync(
+        string layoutKey,
+        IReadOnlyList<HeroGallerySlotAssignment> slots,
+        CancellationToken cancellationToken = default)
+    {
+        var normalizedLayout = HeroLayoutKeys.Normalize(layoutKey);
+        _ = await SendAsync<JsonElement>(
+            HttpMethod.Post,
+            "hero_gallery_settings?on_conflict=id",
+            new
+            {
+                id = 1,
+                layout_key = normalizedLayout,
+                updated_at = DateTimeOffset.UtcNow
+            },
+            "resolution=merge-duplicates,return=minimal",
+            cancellationToken);
+
+        foreach (var slot in slots)
+        {
+            _ = await SendAsync<JsonElement>(
+                HttpMethod.Post,
+                "hero_gallery_slots?on_conflict=slot_key",
+                new
+                {
+                    slot_key = slot.SlotKey,
+                    portfolio_item_id = slot.PortfolioItemId,
+                    sort_order = slot.SortOrder,
+                    updated_at = DateTimeOffset.UtcNow
+                },
+                "resolution=merge-duplicates,return=minimal",
+                cancellationToken);
+        }
+    }
+
     public async Task<UserProfile?> GetProfileAsync(string userId, CancellationToken cancellationToken = default)
     {
         var profiles = await GetAsync<UserProfile>(

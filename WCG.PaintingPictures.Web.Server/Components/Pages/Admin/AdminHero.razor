@@ -1,0 +1,235 @@
+@page "/admin/hero"
+@attribute [Authorize(Roles = "admin")]
+@rendermode InteractiveServer
+@inject HeroGalleryService HeroGalleryService
+@inject PortfolioService PortfolioService
+
+<PageTitle>Hero gallery — Admin</PageTitle>
+
+<SiteHeader />
+
+<div class="pp-admin-page">
+    <div class="pp-admin-header">
+        <h2 class="pp-admin-title">Hero gallery</h2>
+        <div class="pp-admin-header-actions">
+            <button type="button" class="pp-btn pp-btn--accent" @onclick="Save" disabled="@isBusy">Save</button>
+            <a href="/admin" class="pp-admin-back">← Dashboard</a>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(statusMessage))
+    {
+        <p class="@(statusIsError ? "pp-admin-status pp-admin-status--error" : "pp-admin-status")">@statusMessage</p>
+    }
+
+    @if (isLoading || config is null)
+    {
+        <p class="pp-admin-placeholder-body">Loading hero configuration…</p>
+    }
+    else
+    {
+        <section class="pp-hero-admin">
+            <div class="pp-hero-admin__layout">
+                <h3 class="pp-admin-form-title">Layout preset</h3>
+                <div class="pp-hero-admin__presets" role="radiogroup" aria-label="Hero layout preset">
+                    @foreach (var preset in presets)
+                    {
+                        <label class="pp-hero-admin__preset @(config.LayoutKey == preset.Key ? "is-active" : "")">
+                            <input type="radio"
+                                   name="hero-layout"
+                                   value="@preset.Key"
+                                   checked="@(config.LayoutKey == preset.Key)"
+                                   @onchange="() => SelectLayout(preset.Key)" />
+                            <span class="pp-hero-admin__preset-preview pp-hero-admin__preset-preview--@preset.Key" aria-hidden="true">
+                                <span></span><span></span><span></span><span></span>
+                            </span>
+                            <span class="pp-hero-admin__preset-copy">
+                                <strong>@preset.Title</strong>
+                                <em>@preset.Description</em>
+                            </span>
+                        </label>
+                    }
+                </div>
+            </div>
+
+            <div class="pp-hero-admin__live">
+                <h3 class="pp-admin-form-title">Live preview</h3>
+                <div class="pp-hero-gallery pp-hero-gallery--preview pp-hero-gallery--@config.LayoutKey" aria-hidden="true">
+                    <div class="pp-hero-gallery__grid">
+                        @foreach (var slot in config.Slots.OrderBy(x => x.SortOrder))
+                        {
+                            var item = ResolveItem(slot.PortfolioItemId);
+                            var isPoem = item?.Type == "poem";
+                            <div class="pp-hero-card @HeroSlotKeys.CssModifier(slot.SlotKey) @(isPoem ? "pp-hero-card--poem" : "")">
+                                @if (isPoem)
+                                {
+                                    <div class="pp-hero-card__poem">
+                                        <span class="pp-hero-card__quote-mark">“</span>
+                                        <p class="pp-hero-card__quote">@QuoteFor(item)</p>
+                                        <span class="pp-hero-card__poem-label">Poem</span>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="pp-hero-card__media @(string.IsNullOrEmpty(item?.Image) ? "is-empty" : "")">
+                                        @if (!string.IsNullOrEmpty(item?.Image))
+                                        {
+                                            <img src="@item.Image" alt="" class="pp-hero-card__img" />
+                                        }
+                                    </div>
+                                    <div class="pp-hero-card__overlay">
+                                        <span class="pp-hero-card__eyebrow">@slot.Label(config.LayoutKey)</span>
+                                        <h2 class="pp-hero-card__title">@(item?.Title ?? "Empty slot")</h2>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="pp-hero-admin__slots">
+                <h3 class="pp-admin-form-title">Slot assignments</h3>
+                <div class="pp-hero-admin__slot-grid">
+                    @foreach (var slot in config.Slots.OrderBy(x => x.SortOrder))
+                    {
+                        <div class="pp-hero-admin__slot">
+                            <label class="pp-admin-label" for="slot-@slot.SlotKey">@slot.Label(config.LayoutKey)</label>
+                            <select id="slot-@slot.SlotKey"
+                                    class="pp-admin-input"
+                                    value="@(slot.PortfolioItemId?.ToString() ?? "")"
+                                    @onchange="e => AssignSlot(slot.SlotKey, e.Value?.ToString())">
+                                <option value="">— None —</option>
+                                @foreach (var item in items)
+                                {
+                                    <option value="@item.Id">@item.Title (@item.TypeLabel)</option>
+                                }
+                            </select>
+                        </div>
+                    }
+                </div>
+            </div>
+        </section>
+    }
+</div>
+
+@code {
+    private sealed record PresetOption(string Key, string Title, string Description);
+
+    private readonly IReadOnlyList<PresetOption> presets =
+    [
+        new(HeroLayoutKeys.Editorial, "Editorial", "Current asymmetric gallery composition"),
+        new(HeroLayoutKeys.Balanced, "Balanced", "Equal four-panel grid"),
+        new(HeroLayoutKeys.FeaturedStrip, "Featured strip", "Wide feature above three panels")
+    ];
+
+    private HeroGalleryConfig? config;
+    private IReadOnlyList<PortfolioItem> items = [];
+    private bool isLoading = true;
+    private bool isBusy;
+    private string? statusMessage;
+    private bool statusIsError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            items = await PortfolioService.LoadAsync() ?? [];
+            config = await HeroGalleryService.GetConfigAsync();
+        }
+        catch (Exception ex)
+        {
+            config = HeroGalleryConfig.Empty();
+            SetStatus($"Could not load hero configuration: {ex.Message}", isError: true);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void SelectLayout(string layoutKey)
+    {
+        if (config is null)
+            return;
+
+        config.LayoutKey = HeroLayoutKeys.Normalize(layoutKey);
+        statusMessage = null;
+    }
+
+    private void AssignSlot(string slotKey, string? rawId)
+    {
+        if (config is null)
+            return;
+
+        var slot = config.Slots.FirstOrDefault(x => x.SlotKey == slotKey);
+        if (slot is null)
+            return;
+
+        if (string.IsNullOrWhiteSpace(rawId))
+        {
+            slot.PortfolioItemId = null;
+            slot.Item = null;
+        }
+        else if (int.TryParse(rawId, out var id))
+        {
+            slot.PortfolioItemId = id;
+            slot.Item = ResolveItem(id);
+        }
+
+        statusMessage = null;
+    }
+
+    private async Task Save()
+    {
+        if (config is null)
+            return;
+
+        var assigned = config.Slots
+            .Where(x => x.PortfolioItemId is > 0)
+            .Select(x => x.PortfolioItemId!.Value)
+            .ToList();
+
+        if (assigned.Count != assigned.Distinct().Count())
+        {
+            SetStatus("Each portfolio item can only be used in one slot.", isError: true);
+            return;
+        }
+
+        isBusy = true;
+        try
+        {
+            await HeroGalleryService.SaveConfigAsync(config);
+            config = await HeroGalleryService.GetConfigAsync();
+            SetStatus("Hero gallery published.", isError: false);
+        }
+        catch (Exception ex)
+        {
+            SetStatus($"Save failed: {ex.Message}", isError: true);
+        }
+        finally
+        {
+            isBusy = false;
+        }
+    }
+
+    private PortfolioItem? ResolveItem(int? id) =>
+        id is null ? null : items.FirstOrDefault(x => x.Id == id);
+
+    private static string QuoteFor(PortfolioItem? item)
+    {
+        var lines = item?.Poem?
+            .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Take(3)
+            .ToArray();
+        return lines is { Length: > 0 }
+            ? string.Join("\n", lines)
+            : "Assign a poem to this slot.";
+    }
+
+    private void SetStatus(string message, bool isError)
+    {
+        statusMessage = message;
+        statusIsError = isError;
+    }
+}
