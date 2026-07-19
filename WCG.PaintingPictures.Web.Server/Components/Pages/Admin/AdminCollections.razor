@@ -94,7 +94,7 @@
                                            @onchange="e => ToggleItem(item.Id, e.Value is true)" />
                                     @if (item.HasImage)
                                     {
-                                        <img src="@item.Image" alt="" />
+                                        <img src="@item.DisplayImageUrl" alt="" />
                                     }
                                     else
                                     {
@@ -165,7 +165,7 @@
                             <td class="pp-admin-td-thumb">
                                 @if (captured.CoverItem?.HasImage == true)
                                 {
-                                    <img src="@captured.CoverItem.Image" alt="" class="pp-admin-thumb" />
+                                    <img src="@captured.CoverItem.DisplayImageUrl" alt="" class="pp-admin-thumb" />
                                 }
                                 else
                                 {

@@ -329,6 +329,19 @@ public sealed class SupabaseDataService
         return $"{_url}/storage/v1/object/public/{PortfolioBucket}/{objectPath}";
     }
 
+    public async Task<byte[]> DownloadPublicObjectAsync(
+        string publicUrl,
+        CancellationToken cancellationToken = default)
+    {
+        if (!IsConfigured)
+            throw new InvalidOperationException("Supabase service role access is not configured.");
+
+        using var response = await _httpClientFactory.CreateClient()
+            .GetAsync(publicUrl, cancellationToken);
+        await EnsureSuccessAsync(response, cancellationToken);
+        return await response.Content.ReadAsByteArrayAsync(cancellationToken);
+    }
+
     private const string PortfolioBucket = "portfolio";
 
     private static string GuessExtension(string contentType) => contentType.ToLowerInvariant() switch
@@ -337,7 +350,8 @@ public sealed class SupabaseDataService
         "image/png" => ".png",
         "image/webp" => ".webp",
         "image/gif" => ".gif",
-        "image/heic" or "image/heif" => ".jpg",
+        "image/heic" => ".heic",
+        "image/heif" => ".heif",
         _ => ".bin"
     };
 
@@ -414,11 +428,17 @@ public sealed class SupabaseDataService
             ["title"] = item.Title.Trim(),
             ["type"] = item.Type,
             ["image"] = item.Image,
+            ["image_display"] = item.ImageDisplay,
             ["description"] = item.Description,
             ["poem"] = item.Poem,
             ["thoughts"] = item.Thoughts,
             ["image_width"] = Math.Max(1, item.ImageWidth),
             ["image_height"] = Math.Max(1, item.ImageHeight),
+            ["latitude"] = item.Latitude,
+            ["longitude"] = item.Longitude,
+            ["taken_at"] = item.TakenAt,
+            ["camera_make"] = item.CameraMake,
+            ["camera_model"] = item.CameraModel,
             ["is_published"] = item.IsPublished
         };
         if (includeId)

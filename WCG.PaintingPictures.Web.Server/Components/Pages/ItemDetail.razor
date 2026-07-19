@@ -35,7 +35,7 @@
                         </a>
                     }
 
-                    <img src="@item.Image" alt="@item.Title" class="pp-photo-main-img" />
+                    <img src="@item.DisplayImageUrl" alt="@item.Title" class="pp-photo-main-img" />
 
                     @if (next != null)
                     {
@@ -51,7 +51,7 @@
                         <a href="/item/@thumb.Id"
                            class="pp-photo-thumb @(thumb.Id == item.Id ? "pp-photo-thumb--active" : "")"
                            title="@thumb.Title">
-                            <img src="@thumb.Image" alt="@thumb.Title" />
+                            <img src="@thumb.DisplayImageUrl" alt="@thumb.Title" />
                         </a>
                     }
                 </div>
@@ -72,6 +72,37 @@
                 <div class="pp-photo-stats">
                     <span class="pp-type-badge">@item.TypeLabel</span>
                 </div>
+
+                @if (item.TakenAt is not null || item.HasLocation || !string.IsNullOrWhiteSpace(item.CameraMake) || !string.IsNullOrWhiteSpace(item.CameraModel))
+                {
+                    <dl class="pp-photo-meta">
+                        @if (item.TakenAt is not null)
+                        {
+                            <div>
+                                <dt>Taken</dt>
+                                <dd>@item.TakenAt.Value.ToLocalTime().ToString("d MMM yyyy, HH:mm")</dd>
+                            </div>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(item.CameraMake) || !string.IsNullOrWhiteSpace(item.CameraModel))
+                        {
+                            <div>
+                                <dt>Camera</dt>
+                                <dd>@($"{item.CameraMake} {item.CameraModel}".Trim())</dd>
+                            </div>
+                        }
+                        @if (item.HasLocation)
+                        {
+                            <div>
+                                <dt>Location</dt>
+                                <dd>
+                                    <a href="@item.MapsUrl" target="_blank" rel="noopener noreferrer">
+                                        @item.Latitude!.Value.ToString("0.#####"), @item.Longitude!.Value.ToString("0.#####")
+                                    </a>
+                                </dd>
+                            </div>
+                        }
+                    </dl>
+                }
 
                 @if (!string.IsNullOrEmpty(item.Description))
                 {
@@ -152,6 +183,25 @@
                     </div>
                 </section>
             </aside>
+        </div>
+    }
+    else if (item.Type is "photograph" or "drawing")
+    {
+        <div class="pp-poem-view">
+            <div class="pp-poem-view-top">
+                <a href="/works" class="pp-photo-back pp-photo-back--poem">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M10.5 3.5L5.5 8l5 4.5-.7.7L4.1 8l5.7-5.2.7.7z"/></svg>
+                    Back to collections
+                </a>
+                <StudioEditLink Href="@PortfolioEditHref" Label="Edit work" />
+            </div>
+            <div class="pp-poem-view-content">
+                <h1 class="pp-poem-view-title">@item.Title</h1>
+                <FluentBadge class="pp-type-badge pp-badge-top" Appearance="Appearance.Neutral">@item.TypeLabel</FluentBadge>
+                <p class="pp-poem-view-note">
+                    This work has no image yet. Open Edit work, upload the picture, then Save.
+                </p>
+            </div>
         </div>
     }
     else

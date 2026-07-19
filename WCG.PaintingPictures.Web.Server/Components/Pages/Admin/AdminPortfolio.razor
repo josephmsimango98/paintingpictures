@@ -63,24 +63,49 @@
                         </div>
                     </div>
                     <div class="pp-admin-field">
-                        <label class="pp-admin-label">Image URL</label>
+                        <label class="pp-admin-label">Image URL (original)</label>
                         <input class="pp-admin-input" @bind="Editing.Image" placeholder="https://… or upload above" />
                     </div>
-                    @if (!string.IsNullOrEmpty(Editing.Image))
+                    @if (!string.IsNullOrEmpty(previewSrc))
                     {
                         <div class="pp-admin-field">
                             <label class="pp-admin-label">Preview</label>
                             <div class="pp-admin-preview">
-                                <img src="@Editing.Image" alt="Preview" />
+                                <img src="@previewSrc" alt="Preview" />
                             </div>
                         </div>
                     }
-                    <div class="pp-admin-field">
-                        <label class="pp-admin-label">Image dimensions <span>(detected on upload)</span></label>
-                        <div class="pp-admin-dimensions">
-                            <input class="pp-admin-input" type="number" min="1" @bind="Editing.ImageWidth" aria-label="Image width" />
-                            <span>×</span>
-                            <input class="pp-admin-input" type="number" min="1" @bind="Editing.ImageHeight" aria-label="Image height" />
+                    <div class="pp-admin-field-row">
+                        <div class="pp-admin-field">
+                            <label class="pp-admin-label">Width <span>(from EXIF / file)</span></label>
+                            <input class="pp-admin-input" type="number" min="1" @bind="Editing.ImageWidth" placeholder="from file metadata" />
+                        </div>
+                        <div class="pp-admin-field">
+                            <label class="pp-admin-label">Height <span>(from EXIF / file)</span></label>
+                            <input class="pp-admin-input" type="number" min="1" @bind="Editing.ImageHeight" placeholder="from file metadata" />
+                        </div>
+                    </div>
+                    <div class="pp-admin-field-row">
+                        <div class="pp-admin-field">
+                            <label class="pp-admin-label">Latitude</label>
+                            <input class="pp-admin-input" type="number" step="any" @bind="Editing.Latitude" placeholder="from EXIF" />
+                        </div>
+                        <div class="pp-admin-field">
+                            <label class="pp-admin-label">Longitude</label>
+                            <input class="pp-admin-input" type="number" step="any" @bind="Editing.Longitude" placeholder="from EXIF" />
+                        </div>
+                    </div>
+                    <div class="pp-admin-field-row">
+                        <div class="pp-admin-field">
+                            <label class="pp-admin-label">Taken at</label>
+                            <input class="pp-admin-input" @bind="takenAtLocal" placeholder="from EXIF" />
+                        </div>
+                        <div class="pp-admin-field">
+                            <label class="pp-admin-label">Camera</label>
+                            <input class="pp-admin-input"
+                                   value="@CameraLabel"
+                                   @onchange="OnCameraChanged"
+                                   placeholder="Make / model from EXIF" />
                         </div>
                     </div>
                 </fieldset>
@@ -157,7 +182,7 @@
                             <td class="pp-admin-td-thumb">
                                 @if (captured.HasImage)
                                 {
-                                    <img src="@captured.Image" alt="" class="pp-admin-thumb" />
+                                    <img src="@captured.DisplayImageUrl" alt="" class="pp-admin-thumb" />
                                 }
                                 else
                                 {
@@ -210,6 +235,7 @@
 
     private IReadOnlyList<PortfolioItem> items = [];
     private PortfolioItem? Editing;
+    private string? editingPreviewDataUrl;
     private bool isLoading = true;
     private bool isBusy;
     private bool isUploading;
@@ -219,6 +245,33 @@
     private static readonly HashSet<string> SupportedImageExtensions =
         [".jpg", ".jpeg", ".png", ".webp", ".gif", ".heic", ".heif"];
     private string BackHref => LocalReturnUrl(ReturnUrl);
+
+    private string? previewSrc =>
+        editingPreviewDataUrl
+        ?? Editing?.DisplayImageUrl
+        ?? Editing?.Image;
+
+    private string CameraLabel =>
+        string.Join(" ", new[] { Editing?.CameraMake, Editing?.CameraModel }
+            .Where(x => !string.IsNullOrWhiteSpace(x)));
+
+    private string takenAtLocal
+    {
+        get => Editing?.TakenAt?.ToLocalTime().ToString("yyyy-MM-dd HH:mm") ?? "";
+        set
+        {
+            if (Editing is null)
+                return;
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                Editing.TakenAt = null;
+                return;
+            }
+
+            if (DateTime.TryParse(value, out var parsed))
+                Editing.TakenAt = new DateTimeOffset(parsed);
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -269,29 +322,38 @@
             Type = PortfolioMedia.Normalize(type),
             IsPublished = false
         };
+        editingPreviewDataUrl = null;
     }
 
     private void EditItem(PortfolioItem item)
     {
         statusMessage = null;
-        Editing = new PortfolioItem
+        editingPreviewDataUrl = null;
+        Editing = CloneItem(item);
+    }
+
+    private void OnCameraChanged(ChangeEventArgs args)
+    {
+        if (Editing is null)
+            return;
+
+        var raw = args.Value?.ToString()?.Trim() ?? "";
+        if (string.IsNullOrWhiteSpace(raw))
         {
-            Id = item.Id,
-            Title = item.Title,
-            Type = item.Type,
-            Image = item.Image,
-            Description = item.Description,
-            Poem = item.Poem,
-            Thoughts = item.Thoughts,
-            ImageWidth = item.ImageWidth,
-            ImageHeight = item.ImageHeight,
-            IsPublished = item.IsPublished
-        };
+            Editing.CameraMake = null;
+            Editing.CameraModel = null;
+            return;
+        }
+
+        var parts = raw.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
+        Editing.CameraMake = parts.ElementAtOrDefault(0);
+        Editing.CameraModel = parts.Length > 1 ? parts[1] : null;
     }
 
     private void CancelEdit()
     {
         Editing = null;
+        editingPreviewDataUrl = null;
         isUploading = false;
     }
 
@@ -324,19 +386,46 @@
             await using var stream = file.OpenReadStream(MaxUploadBytes);
             var uploaded = await PortfolioService.UploadImageAsync(stream, file.Name, file.ContentType);
             Editing.Image = uploaded.Url;
-            Editing.ImageWidth = uploaded.Width;
-            Editing.ImageHeight = uploaded.Height;
+            Editing.ImageDisplay = uploaded.DisplayUrl;
+            if (uploaded.Width > 0 && uploaded.Height > 0)
+            {
+                Editing.ImageWidth = uploaded.Width;
+                Editing.ImageHeight = uploaded.Height;
+            }
+            Editing.Latitude = uploaded.Latitude;
+            Editing.Longitude = uploaded.Longitude;
+            Editing.TakenAt = uploaded.TakenAt;
+            Editing.CameraMake = uploaded.CameraMake;
+            Editing.CameraModel = uploaded.CameraModel;
+            editingPreviewDataUrl = uploaded.PreviewDataUrl ?? uploaded.DisplayUrl;
 
-            var conversionNote = uploaded.WasConvertedFromHeic
-                ? " HEIC was converted to JPEG for browser compatibility."
-                : "";
+            var metaBits = new List<string>();
+            if (uploaded.Width > 0 && uploaded.Height > 0)
+                metaBits.Add($"{uploaded.Width} × {uploaded.Height}");
+            if (uploaded.IsHeic)
+                metaBits.Add("original HEIC kept");
+            if (uploaded.DisplayUrl is not null)
+                metaBits.Add("JPEG preview ready");
+            if (uploaded.Latitude is not null && uploaded.Longitude is not null)
+                metaBits.Add($"location {uploaded.Latitude}, {uploaded.Longitude}");
+            if (uploaded.TakenAt is not null)
+                metaBits.Add($"taken {uploaded.TakenAt.Value.LocalDateTime:g}");
+            if (!string.IsNullOrWhiteSpace(uploaded.CameraMake) || !string.IsNullOrWhiteSpace(uploaded.CameraModel))
+                metaBits.Add($"{uploaded.CameraMake} {uploaded.CameraModel}".Trim());
+            if (!string.IsNullOrWhiteSpace(uploaded.InspectError))
+                metaBits.Add($"metadata warning: {uploaded.InspectError}");
+            if (!string.IsNullOrWhiteSpace(uploaded.ConvertError))
+                metaBits.Add($"convert warning: {uploaded.ConvertError}");
+
+            var metaNote = metaBits.Count == 0 ? "" : " " + string.Join(" · ", metaBits) + ".";
             SetStatus(
-                $"Picture uploaded at {uploaded.Width} × {uploaded.Height}.{conversionNote} Save the item to keep the change.",
-                isError: false);
+                $"Picture uploaded.{metaNote} Save the item to keep the change.",
+                isError: !string.IsNullOrWhiteSpace(uploaded.InspectError) && uploaded.Width <= 0);
         }
         catch (Exception ex)
         {
-            SetStatus($"Upload failed: {ex.Message}", isError: true);
+            var detail = ex.InnerException?.Message ?? ex.Message;
+            SetStatus($"Upload failed: {detail}", isError: true);
         }
         finally
         {
@@ -355,6 +444,12 @@
             return;
         }
 
+        if ((Editing.Type is "photograph" or "drawing") && string.IsNullOrWhiteSpace(Editing.Image))
+        {
+            SetStatus("Upload a picture before saving a photograph or drawing.", isError: true);
+            return;
+        }
+
         isBusy = true;
         try
         {
@@ -365,6 +460,7 @@
                 await PortfolioService.UpdateAsync(Editing);
 
             Editing = null;
+            editingPreviewDataUrl = null;
             items = await PortfolioService.LoadAsync() ?? [];
             SetStatus(
                 wasPublished
@@ -387,19 +483,8 @@
         isBusy = true;
         try
         {
-            var updated = new PortfolioItem
-            {
-                Id = item.Id,
-                Title = item.Title,
-                Type = item.Type,
-                Image = item.Image,
-                Description = item.Description,
-                Poem = item.Poem,
-                Thoughts = item.Thoughts,
-                ImageWidth = item.ImageWidth,
-                ImageHeight = item.ImageHeight,
-                IsPublished = !item.IsPublished
-            };
+            var updated = CloneItem(item);
+            updated.IsPublished = !item.IsPublished;
             await PortfolioService.UpdateAsync(updated);
             items = await PortfolioService.LoadAsync() ?? [];
             SetStatus(
@@ -429,7 +514,10 @@
         {
             await PortfolioService.DeleteAsync(id);
             if (Editing?.Id == id)
+            {
                 Editing = null;
+                editingPreviewDataUrl = null;
+            }
             items = await PortfolioService.LoadAsync() ?? [];
             SetStatus("Item deleted.", isError: false);
         }
@@ -448,4 +536,24 @@
         statusMessage = message;
         statusIsError = isError;
     }
+
+    private static PortfolioItem CloneItem(PortfolioItem item) => new()
+    {
+        Id = item.Id,
+        Title = item.Title,
+        Type = item.Type,
+        Image = item.Image,
+        ImageDisplay = item.ImageDisplay,
+        Description = item.Description,
+        Poem = item.Poem,
+        Thoughts = item.Thoughts,
+        ImageWidth = item.ImageWidth,
+        ImageHeight = item.ImageHeight,
+        Latitude = item.Latitude,
+        Longitude = item.Longitude,
+        TakenAt = item.TakenAt,
+        CameraMake = item.CameraMake,
+        CameraModel = item.CameraModel,
+        IsPublished = item.IsPublished
+    };
 }

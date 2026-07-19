@@ -110,7 +110,7 @@
         return new HeroPanel(
             Title: TitleFor(item),
             Description: item.Description?.Split('.')[0] ?? "A study in light and presence",
-            Image: item.Image,
+            Image: item.DisplayImageUrl,
             Href: $"/item/{item.Id}",
             ModifierClass: modifier,
             IsFeatured: isFeatured);

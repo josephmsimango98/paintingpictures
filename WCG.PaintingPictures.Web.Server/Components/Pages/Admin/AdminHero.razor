@@ -71,10 +71,10 @@
                                 }
                                 else
                                 {
-                                    <div class="pp-hero-card__media @(string.IsNullOrEmpty(item?.Image) ? "is-empty" : "")">
-                                        @if (!string.IsNullOrEmpty(item?.Image))
+                                    <div class="pp-hero-card__media @(string.IsNullOrEmpty(item?.DisplayImageUrl) ? "is-empty" : "")">
+                                        @if (!string.IsNullOrEmpty(item?.DisplayImageUrl))
                                         {
-                                            <img src="@item.Image" alt="" class="pp-hero-card__img" />
+                                            <img src="@item.DisplayImageUrl" alt="" class="pp-hero-card__img" />
                                         }
                                     </div>
                                     <div class="pp-hero-card__overlay">

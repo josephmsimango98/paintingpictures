@@ -31,6 +31,12 @@ builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+// InputFile uploads ride the Blazor circuit; default SignalR limit is ~32 KB.
+builder.Services.Configure<Microsoft.AspNetCore.SignalR.HubOptions>(options =>
+{
+    options.MaximumReceiveMessageSize = 30 * 1024 * 1024;
+});
+
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())
@@ -148,6 +154,31 @@ app.MapGet("/api/auth/logout", async (HttpContext ctx) =>
 {
     await ctx.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
     return Results.Redirect("/");
+});
+
+// Convert HEIC (and similar) originals to JPEG on demand for browser display.
+app.MapGet("/api/media/{id:int}", async (
+    int id,
+    PortfolioService portfolio,
+    CancellationToken cancellationToken) =>
+{
+    await portfolio.LoadAsync(cancellationToken);
+    var item = portfolio.GetById(id);
+    if (item is null || !item.HasImage)
+        return Results.NotFound();
+
+    try
+    {
+        var displayUrl = await portfolio.EnsureDisplayImageAsync(item, cancellationToken);
+        return Results.Redirect(displayUrl);
+    }
+    catch (Exception ex)
+    {
+        return Results.Problem(
+            detail: ex.Message,
+            statusCode: StatusCodes.Status500InternalServerError,
+            title: "Could not prepare display image");
+    }
 });
 
 app.MapStaticAssets();

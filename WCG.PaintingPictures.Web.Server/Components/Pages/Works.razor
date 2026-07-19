@@ -102,7 +102,7 @@
                                title="@item.Title">
                                 @if (item.HasImage)
                                 {
-                                    <img src="@item.Image" alt="@item.Title" class="pp-flickr-card-img" />
+                                    <img src="@item.DisplayImageUrl" alt="@item.Title" class="pp-flickr-card-img" />
                                 }
                                 else
                                 {
@@ -197,7 +197,7 @@
         if (item?.HasImage == true)
         {
             builder.OpenElement(0, "img");
-            builder.AddAttribute(1, "src", item.Image);
+            builder.AddAttribute(1, "src", item.DisplayImageUrl);
             builder.AddAttribute(2, "alt", "");
             builder.CloseElement();
             return;

@@ -1581,6 +1581,41 @@ fluent-divider {
     border-bottom: 1px solid #eee;
 }
 
+.pp-photo-meta {
+    display: grid;
+    gap: 10px;
+    margin: 0 0 20px;
+    padding: 0;
+    font-family: var(--font-body);
+    font-size: 0.82rem;
+    color: #555;
+}
+
+.pp-photo-meta > div {
+    display: grid;
+    grid-template-columns: 72px 1fr;
+    gap: 8px;
+    align-items: baseline;
+}
+
+.pp-photo-meta dt {
+    margin: 0;
+    color: #999;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.pp-photo-meta dd {
+    margin: 0;
+}
+
+.pp-photo-meta a {
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
 .pp-photo-description {
     color: #444 !important;
     line-height: 1.7;
