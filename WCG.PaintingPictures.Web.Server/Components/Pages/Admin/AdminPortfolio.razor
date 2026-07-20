@@ -166,58 +166,105 @@
         }
         else
         {
-            <table class="pp-admin-table">
-                <thead>
-                    <tr>
-                        <th>Preview</th>
-                        <th>Title</th>
-                        <th>Category</th>
-                        <th>Visibility</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var item in items)
-                    {
-                        var captured = item;
+            <div class="pp-admin-list-toolbar">
+                <nav class="pp-admin-list-filters" aria-label="Category">
+                    <button type="button"
+                            class="pp-admin-list-filter @(filterType == "all" ? "is-active" : null)"
+                            @onclick='() => SetTypeFilter("all")'>All</button>
+                    <button type="button"
+                            class="pp-admin-list-filter @(filterType == PortfolioMedia.Photograph ? "is-active" : null)"
+                            @onclick='() => SetTypeFilter(PortfolioMedia.Photograph)'>Photographs</button>
+                    <button type="button"
+                            class="pp-admin-list-filter @(filterType == PortfolioMedia.Drawing ? "is-active" : null)"
+                            @onclick='() => SetTypeFilter(PortfolioMedia.Drawing)'>Drawings</button>
+                    <button type="button"
+                            class="pp-admin-list-filter @(filterType == PortfolioMedia.Poem ? "is-active" : null)"
+                            @onclick='() => SetTypeFilter(PortfolioMedia.Poem)'>Poems</button>
+                </nav>
+                <div class="pp-admin-list-toolbar__right">
+                    <select class="pp-admin-input pp-admin-list-visibility"
+                            value="@filterVisibility"
+                            @onchange="OnVisibilityFilterChanged"
+                            aria-label="Visibility">
+                        <option value="all">All visibility</option>
+                        <option value="published">Published</option>
+                        <option value="draft">Drafts</option>
+                    </select>
+                    <input class="pp-admin-input pp-admin-list-search"
+                           @bind="searchText"
+                           @bind:event="oninput"
+                           placeholder="Search title…"
+                           aria-label="Search by title" />
+                    <span class="pp-admin-list-count">@FilteredItems.Count of @items.Count</span>
+                </div>
+            </div>
+
+            @if (FilteredItems.Count == 0)
+            {
+                <div class="pp-admin-placeholder">
+                    <p class="pp-admin-placeholder-title">No matching items</p>
+                    <p class="pp-admin-placeholder-body">Try All, clear the search, or change visibility.</p>
+                </div>
+            }
+            else
+            {
+                <table class="pp-admin-table">
+                    <thead>
                         <tr>
-                            <td class="pp-admin-td-thumb">
-                                @if (captured.HasImage)
-                                {
-                                    <img src="@captured.DisplayImageUrl" alt="" class="pp-admin-thumb" />
-                                }
-                                else
-                                {
-                                    <span class="pp-admin-thumb pp-admin-thumb--empty">—</span>
-                                }
-                            </td>
-                            <td class="pp-admin-td-title">@captured.Title</td>
-                            <td><span class="pp-type-badge">@captured.TypeLabel</span></td>
-                            <td>
-                                <span class="pp-visibility-badge @(captured.IsPublished ? "is-published" : "is-draft")">
-                                    @captured.VisibilityLabel
-                                </span>
-                            </td>
-                            <td class="pp-admin-td-actions">
-                                <button type="button" class="pp-btn pp-btn--sm" @onclick="() => EditItem(captured)">Edit</button>
-                                <button type="button"
-                                        class="pp-btn pp-btn--sm"
-                                        @onclick="() => TogglePublished(captured)"
-                                        disabled="@isBusy">
-                                    @(captured.IsPublished ? "Unpublish" : "Publish")
-                                </button>
-                                <button type="button"
-                                        class="pp-btn pp-btn--sm pp-btn--danger"
-                                        @onclick="() => DeleteItem(captured.Id)"
-                                        disabled="@isBusy">
-                                    Delete
-                                </button>
-                                <a href="/item/@captured.Id" class="pp-admin-view-link">View</a>
-                            </td>
+                            <th>Preview</th>
+                            <th>Title</th>
+                            <th>Category</th>
+                            <th>Visibility</th>
+                            <th></th>
                         </tr>
-                    }
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in FilteredItems)
+                        {
+                            var captured = item;
+                            <tr>
+                                <td class="pp-admin-td-thumb">
+                                    @if (captured.HasImage)
+                                    {
+                                        <img src="@captured.DisplayImageUrl"
+                                             alt=""
+                                             class="pp-admin-thumb"
+                                             loading="lazy"
+                                             onerror="this.onerror=null;this.replaceWith(Object.assign(document.createElement('span'),{className:'pp-admin-thumb pp-admin-thumb--empty',textContent:'—'}));" />
+                                    }
+                                    else
+                                    {
+                                        <span class="pp-admin-thumb pp-admin-thumb--empty">—</span>
+                                    }
+                                </td>
+                                <td class="pp-admin-td-title">@captured.Title</td>
+                                <td><span class="pp-type-badge">@captured.TypeLabel</span></td>
+                                <td>
+                                    <span class="pp-visibility-badge @(captured.IsPublished ? "is-published" : "is-draft")">
+                                        @captured.VisibilityLabel
+                                    </span>
+                                </td>
+                                <td class="pp-admin-td-actions">
+                                    <button type="button" class="pp-btn pp-btn--sm" @onclick="() => EditItem(captured)">Edit</button>
+                                    <button type="button"
+                                            class="pp-btn pp-btn--sm"
+                                            @onclick="() => TogglePublished(captured)"
+                                            disabled="@isBusy">
+                                        @(captured.IsPublished ? "Unpublish" : "Publish")
+                                    </button>
+                                    <button type="button"
+                                            class="pp-btn pp-btn--sm pp-btn--danger"
+                                            @onclick="() => DeleteItem(captured.Id)"
+                                            disabled="@isBusy">
+                                        Delete
+                                    </button>
+                                    <a href="/item/@captured.Id" class="pp-admin-view-link">View</a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
         }
     </div>
 </div>
@@ -244,7 +291,40 @@
     private bool isUploading;
     private string? statusMessage;
     private bool statusIsError;
+    private string filterType = "all";
+    private string filterVisibility = "all";
+    private string searchText = "";
     private string BackHref => LocalReturnUrl(ReturnUrl);
+
+    private IReadOnlyList<PortfolioItem> FilteredItems
+    {
+        get
+        {
+            IEnumerable<PortfolioItem> query = items;
+
+            if (filterType is not "all")
+            {
+                query = query.Where(x =>
+                    string.Equals(x.Type, filterType, StringComparison.OrdinalIgnoreCase));
+            }
+
+            query = filterVisibility switch
+            {
+                "published" => query.Where(x => x.IsPublished),
+                "draft" => query.Where(x => !x.IsPublished),
+                _ => query
+            };
+
+            if (!string.IsNullOrWhiteSpace(searchText))
+            {
+                var term = searchText.Trim();
+                query = query.Where(x =>
+                    x.Title.Contains(term, StringComparison.OrdinalIgnoreCase));
+            }
+
+            return query.ToList();
+        }
+    }
 
     private string? previewSrc =>
         editingPreviewDataUrl
@@ -298,7 +378,19 @@
         else if (Create)
         {
             StartNewItem(Type);
+            if (!string.IsNullOrWhiteSpace(Type))
+                filterType = PortfolioMedia.Normalize(Type);
         }
+    }
+
+    private void SetTypeFilter(string type)
+    {
+        filterType = type;
+    }
+
+    private void OnVisibilityFilterChanged(ChangeEventArgs args)
+    {
+        filterVisibility = args.Value?.ToString() ?? "all";
     }
 
     private static string LocalReturnUrl(string? value) =>

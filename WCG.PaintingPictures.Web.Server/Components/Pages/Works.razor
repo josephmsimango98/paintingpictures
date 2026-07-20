@@ -12,10 +12,9 @@
         <StudioEditLink Href="@NewItemHref" Label="@NewItemLabel" AddIcon="true" />
         <StudioEditLink Href="@CollectionsEditHref" Label="Edit collections" />
     </div>
-    <div class="pp-works__intro">
-        <h1 class="pp-works__title">@PortfolioMedia.PluralLabel(medium)</h1>
-        <p class="pp-works__subtitle">Browse collections and works in this medium.</p>
-        <div class="pp-works__filters" role="tablist" aria-label="Categories">
+
+    <div class="pp-works__toolbar">
+        <nav class="pp-works__filters" role="tablist" aria-label="Medium">
             <a href="/works?type=photograph&collection=all"
                class="pp-works__filter @(medium == PortfolioMedia.Photograph ? "is-active" : null)"
                role="tab"
@@ -28,61 +27,64 @@
                class="pp-works__filter @(medium == PortfolioMedia.Poem ? "is-active" : null)"
                role="tab"
                aria-selected="@(medium == PortfolioMedia.Poem)">Poems</a>
-        </div>
-    </div>
-
-    <div class="pp-collection-rail-wrap">
-        <div class="pp-collection-rail" role="tablist" aria-label="Collections">
-            <a href="/works?type=@medium&collection=all"
-               class="pp-collection-chip @(selectedSlug == "all" ? "is-active" : "")"
-               role="tab"
-               aria-selected="@(selectedSlug == "all")">
-                <span class="pp-collection-chip__thumb">
-                    @ChipCover(mediumItems.FirstOrDefault(), "All")
-                </span>
-                <span class="pp-collection-chip__meta">
-                    <strong>All</strong>
-                    <small>@mediumItems.Count</small>
-                </span>
-            </a>
-
-            @foreach (var collection in customCollections)
-            {
-                <a href="/works?type=@medium&collection=@collection.Slug"
-                   class="pp-collection-chip @(selectedSlug == collection.Slug ? "is-active" : "")"
-                   role="tab"
-                   aria-selected="@(selectedSlug == collection.Slug)">
-                    <span class="pp-collection-chip__thumb">
-                        @ChipCover(collection.CoverItem, collection.Title)
-                    </span>
-                    <span class="pp-collection-chip__meta">
-                        <strong>@collection.Title</strong>
-                        <small>@collection.ItemCount</small>
-                    </span>
-                </a>
-            }
-        </div>
-    </div>
-
-    <div class="pp-collection-stream-head">
-        <div>
-            <p class="pp-collection-index__eyebrow">@PortfolioMedia.PluralLabel(medium)</p>
-            <h2>@selectedCollectionTitle</h2>
-            @if (!string.IsNullOrWhiteSpace(selectedCollectionDescription))
-            {
-                <p>@selectedCollectionDescription</p>
-            }
-        </div>
-        <span class="pp-collection-stream-head__count">
+        </nav>
+        <span class="pp-works__count" aria-live="polite">
             @streamItems.Count work@(streamItems.Count == 1 ? "" : "s")
         </span>
     </div>
 
+    @if (customCollections.Count > 0)
+    {
+        <div class="pp-collection-rail-wrap">
+            <div class="pp-collection-rail" role="tablist" aria-label="Collections">
+                <a href="/works?type=@medium&collection=all"
+                   class="pp-collection-link @(selectedSlug == "all" ? "is-active" : "")"
+                   role="tab"
+                   aria-selected="@(selectedSlug == "all")">
+                    All
+                </a>
+
+                @foreach (var collection in customCollections)
+                {
+                    <a href="/works?type=@medium&collection=@collection.Slug"
+                       class="pp-collection-chip @(selectedSlug == collection.Slug ? "is-active" : "")"
+                       role="tab"
+                       aria-selected="@(selectedSlug == collection.Slug)">
+                        <span class="pp-collection-chip__thumb">
+                            @ChipCover(collection.CoverItem, collection.Title)
+                        </span>
+                        <span class="pp-collection-chip__meta">
+                            <strong>@collection.Title</strong>
+                            <small>@collection.ItemCount</small>
+                        </span>
+                    </a>
+                }
+            </div>
+        </div>
+    }
+
+    @if (selectedSlug != "all")
+    {
+        <div class="pp-collection-stream-head">
+            <div>
+                <h2>@selectedCollectionTitle</h2>
+                @if (!string.IsNullOrWhiteSpace(selectedCollectionDescription))
+                {
+                    <p>@selectedCollectionDescription</p>
+                }
+            </div>
+        </div>
+    }
+
     @if (streamItems.Count == 0)
     {
         <div class="pp-collection-empty">
-            <h3>No works in this collection yet</h3>
-            <p>Choose another collection, or add works from the studio.</p>
+            <h3>No works here yet</h3>
+            <p>
+                @(selectedSlug == "all"
+                    ? "Upload from the studio to start this photostream."
+                    : "Choose All, or add works to this collection from the studio.")
+            </p>
         </div>
     }
     else
@@ -169,6 +171,7 @@
             streamItems = mediumItems;
             selectedCollectionTitle = "All";
             selectedCollectionDescription = null;
+            pageTitle = PortfolioMedia.PluralLabel(medium);
         }
         else
         {
@@ -179,17 +182,18 @@
                 streamItems = mediumItems;
                 selectedCollectionTitle = "All";
                 selectedCollectionDescription = null;
+                pageTitle = PortfolioMedia.PluralLabel(medium);
             }
             else
             {
                 streamItems = await CollectionService.GetItemsAsync(selected);
                 selectedCollectionTitle = selected.Title;
                 selectedCollectionDescription = selected.Description;
+                pageTitle = $"{PortfolioMedia.PluralLabel(medium)} · {selected.Title}";
             }
         }
 
         rows = JustifiedGridLayout.BuildRows(streamItems);
-        pageTitle = $"{PortfolioMedia.PluralLabel(medium)} · {selectedCollectionTitle}";
     }
 
     private static RenderFragment ChipCover(PortfolioItem? item, string label) => builder =>
