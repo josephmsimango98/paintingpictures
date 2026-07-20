@@ -1,0 +1,125 @@
+@page "/admin/identity"
+@attribute [Authorize(Roles = "admin")]
+@rendermode InteractiveServer
+@inject SiteIdentityService IdentityService
+
+<PageTitle>Site identity — Admin</PageTitle>
+
+<SiteHeader />
+
+<div class="pp-admin-page">
+    <div class="pp-admin-header">
+        <h2 class="pp-admin-title">Site identity</h2>
+        <div class="pp-admin-header-actions">
+            <button type="button" class="pp-btn pp-btn--accent" @onclick="Save" disabled="@isBusy">Save</button>
+            <a href="@BackHref" class="pp-admin-back">← Back to site</a>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(statusMessage))
+    {
+        <p class="@(statusIsError ? "pp-admin-status pp-admin-status--error" : "pp-admin-status")">@statusMessage</p>
+    }
+
+    @if (isLoading || editing is null)
+    {
+        <p class="pp-admin-placeholder-body">Loading identity…</p>
+    }
+    else
+    {
+        <div class="pp-admin-form-wrap">
+            <p class="pp-admin-placeholder-body" style="margin-bottom: 1.25rem;">
+                Shown on the homepage so visitors know whose work they are looking at.
+            </p>
+            <div class="pp-admin-form">
+                <div class="pp-admin-field">
+                    <label class="pp-admin-label">Site title</label>
+                    <input class="pp-admin-input" @bind="editing.SiteTitle" placeholder="The Irony" />
+                </div>
+                <div class="pp-admin-field">
+                    <label class="pp-admin-label">Artist name</label>
+                    <input class="pp-admin-input" @bind="editing.ArtistName" placeholder="Joseph Msimango" />
+                </div>
+                <div class="pp-admin-field">
+                    <label class="pp-admin-label">Statement</label>
+                    <textarea class="pp-admin-input pp-admin-textarea"
+                              @bind="editing.Statement"
+                              rows="4"
+                              placeholder="A short line about the practice…"></textarea>
+                </div>
+
+                <div class="pp-identity-preview" aria-hidden="true">
+                    <p class="pp-identity-preview__label">Preview</p>
+                    <p class="pp-home-intro__byline">by @editing.ArtistName</p>
+                    <p class="pp-home-intro__statement">@editing.Statement</p>
+                </div>
+
+                <div class="pp-admin-form-actions">
+                    <button type="button" class="pp-btn pp-btn--accent" @onclick="Save" disabled="@isBusy">Save</button>
+                    <a href="@BackHref" class="pp-btn">Cancel</a>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [SupplyParameterFromQuery(Name = "returnUrl")]
+    public string? ReturnUrl { get; set; }
+
+    private string BackHref =>
+        !string.IsNullOrWhiteSpace(ReturnUrl)
+        && ReturnUrl.StartsWith('/')
+        && !ReturnUrl.StartsWith("//")
+        && !ReturnUrl.StartsWith("/\\")
+            ? ReturnUrl
+            : "/";
+
+    private SiteIdentity? editing;
+    private bool isLoading = true;
+    private bool isBusy;
+    private string? statusMessage;
+    private bool statusIsError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            editing = await IdentityService.GetAsync();
+        }
+        catch (Exception ex)
+        {
+            editing = SiteIdentity.Defaults;
+            statusMessage = $"Could not load identity: {ex.Message}";
+            statusIsError = true;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task Save()
+    {
+        if (editing is null)
+            return;
+
+        isBusy = true;
+        try
+        {
+            await IdentityService.SaveAsync(editing);
+            editing = await IdentityService.GetAsync();
+            statusMessage = "Site identity saved.";
+            statusIsError = false;
+        }
+        catch (Exception ex)
+        {
+            statusMessage = $"Save failed: {ex.Message}";
+            statusIsError = true;
+        }
+        finally
+        {
+            isBusy = false;
+        }
+    }
+}

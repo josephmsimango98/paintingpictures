@@ -1,8 +1,11 @@
+@inject SiteIdentityService IdentityService
+
 <footer class="pp-site-footer">
     <div class="pp-site-footer__inner">
         <p class="pp-site-footer__statement">
-            A curatorial collection exploring light, form, and the stories we hold.
+            @identity.Statement
         </p>
+        <p class="pp-site-footer__byline">by @identity.ArtistName</p>
         <div class="pp-site-footer__social" aria-label="Social links">
             <a href="https://instagram.com" class="pp-icon-btn" target="_blank" rel="noopener noreferrer" aria-label="Instagram" title="Instagram">
                 <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
@@ -25,6 +28,15 @@
                 </svg>
             </a>
         </div>
-        <p class="pp-site-footer__copy">© @DateTime.UtcNow.Year The Irony</p>
+        <p class="pp-site-footer__copy">© @DateTime.UtcNow.Year @identity.SiteTitle</p>
     </div>
 </footer>
+
+@code {
+    private SiteIdentity identity = SiteIdentity.Defaults;
+
+    protected override async Task OnInitializedAsync()
+    {
+        identity = await IdentityService.GetAsync();
+    }
+}

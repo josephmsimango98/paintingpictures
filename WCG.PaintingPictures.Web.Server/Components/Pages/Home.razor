@@ -1,12 +1,33 @@
 @page "/"
 @rendermode InteractiveServer
+@inject SiteIdentityService IdentityService
 
-<PageTitle>The Irony</PageTitle>
+<PageTitle>@(identity.SiteTitle)</PageTitle>
 
 <SiteHeader />
-<div class="pp-studio-page-actions">
-    <StudioEditLink Href="/admin/hero?returnUrl=%2F" Label="Edit homepage" />
-</div>
-<HeroGallery />
-<CategorySection />
+
+<main class="pp-home">
+    <div class="pp-studio-page-actions">
+        <StudioEditLink Href="/admin/identity?returnUrl=%2F" Label="Edit identity" />
+        <StudioEditLink Href="/admin/hero?returnUrl=%2F" Label="Edit homepage" />
+    </div>
+
+    <section class="pp-home-intro" aria-label="About the artist">
+        <p class="pp-home-intro__byline">by @identity.ArtistName</p>
+        <p class="pp-home-intro__statement">@identity.Statement</p>
+    </section>
+
+    <HeroGallery />
+    <CategorySection />
+</main>
+
 <SiteFooter />
+
+@code {
+    private SiteIdentity identity = SiteIdentity.Defaults;
+
+    protected override async Task OnInitializedAsync()
+    {
+        identity = await IdentityService.GetAsync();
+    }
+}

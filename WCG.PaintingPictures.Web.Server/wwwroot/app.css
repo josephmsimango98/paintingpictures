@@ -31,9 +31,13 @@
     --text-label: 0.875rem;
     --text-meta: 0.75rem;
 
-    --content-max: 1280px;
-    --content-pad: 48px;
-    --header-height: 96px;
+    /* Flickr-style shell: fluid width with soft cap (not a tight fixed px box). */
+    --content-width: 80%;
+    --content-cap: 1680px;
+    --content-pad: 0px;
+    /* Legacy alias for any remaining fixed-width references */
+    --content-max: var(--content-cap);
+    --header-height: 112px;
     --hero-height: clamp(440px, 58vh, 560px);
     --surface-raised: #151515;
     --ease-gallery: 600ms ease;
@@ -96,16 +100,21 @@ html, body {
 
 a { color: inherit; }
 
-/* Shared content rhythm */
+/* Shared content rhythm — matches Flickr’s centered ~80% column */
+.pp-shell,
 .pp-container {
-    width: 100%;
-    max-width: var(--content-max);
-    margin-inline: auto;
+    width: var(--content-width);
+    max-width: var(--content-cap);
+    margin-left: auto;
+    margin-right: auto;
     padding-inline: var(--content-pad);
 }
 
-@media (max-width: 800px) {
-    :root { --content-pad: 16px; }
+@media (max-width: 900px) {
+    :root {
+        --content-width: 100%;
+        --content-pad: 16px;
+    }
 }
 
 /* Shared buttons (warm palette only) */
@@ -211,9 +220,10 @@ a { color: inherit; }
     display: flex;
     justify-content: flex-end;
     gap: var(--space-3);
-    width: 100%;
-    max-width: var(--content-max);
-    margin: 0 auto;
+    width: var(--content-width);
+    max-width: var(--content-cap);
+    margin-left: auto;
+    margin-right: auto;
     padding: var(--space-4) var(--content-pad) var(--space-3);
 }
 
@@ -286,10 +296,11 @@ a { color: inherit; }
     align-items: center;
     justify-content: space-between;
     min-height: var(--header-height);
-    max-width: var(--content-max);
-    margin: 0 auto;
-    width: 100%;
-    padding: 20px var(--content-pad);
+    width: var(--content-width);
+    max-width: var(--content-cap);
+    margin-left: auto;
+    margin-right: auto;
+    padding: 32px var(--content-pad) 28px;
     gap: var(--space-5);
 }
 
@@ -553,9 +564,67 @@ html.pp-light .pp-site-brand__logo { filter: none; }
     to { opacity: 1; transform: translateY(0); }
 }
 
+/* ── Home ── */
+.pp-home {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.pp-home-intro {
+    width: var(--content-width);
+    max-width: var(--content-cap);
+    margin-left: auto;
+    margin-right: auto;
+    padding: var(--space-5) var(--content-pad) var(--space-5);
+}
+
+.pp-home-intro__byline {
+    font-family: var(--font-body);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--pp-accent);
+    margin-bottom: var(--space-3);
+}
+
+.pp-home-intro__statement {
+    font-family: var(--font-display);
+    font-size: clamp(1.35rem, 2.4vw, 1.85rem);
+    font-weight: 400;
+    font-style: italic;
+    line-height: 1.45;
+    color: var(--pp-text);
+    max-width: 36ch;
+}
+
+.pp-identity-preview {
+    margin-top: var(--space-4);
+    padding: var(--space-4);
+    border: 1px solid var(--pp-border);
+    background: var(--pp-surface);
+}
+
+.pp-identity-preview__label {
+    font-size: var(--text-meta);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--pp-text-muted);
+    margin-bottom: var(--space-3);
+}
+
+.pp-home .pp-studio-page-actions {
+    padding-bottom: var(--space-2);
+}
+
 /* ── Hero gallery (editorial asymmetric) ── */
 .pp-hero-gallery {
-    width: 100%;
+    width: var(--content-width);
+    max-width: var(--content-cap);
+    margin-left: auto;
+    margin-right: auto;
+    padding-inline: var(--content-pad);
     border-bottom: 1px solid var(--pp-border);
     background: var(--pp-border);
 }
@@ -658,6 +727,10 @@ html.pp-light .pp-site-brand__logo { filter: none; }
 }
 
 .pp-hero-gallery--preview {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding-inline: 0;
     border: 1px solid var(--pp-border);
     pointer-events: none;
 }
@@ -866,10 +939,11 @@ html.pp-light .pp-hero-card--poem { background: #1a1814; }
 
 /* ── Categories ── */
 .pp-categories {
-    padding: var(--space-7) 0 var(--space-8);
-    max-width: var(--content-max);
-    margin: 0 auto;
-    padding-inline: var(--content-pad);
+    width: var(--content-width);
+    max-width: var(--content-cap);
+    margin-left: auto;
+    margin-right: auto;
+    padding: var(--space-7) var(--content-pad) var(--space-8);
     background: var(--pp-bg);
 }
 
@@ -965,13 +1039,15 @@ html.pp-light .pp-hero-card--poem { background: #1a1814; }
 .pp-site-footer {
     border-top: 1px solid var(--pp-border);
     background: var(--surface-raised);
-    padding: var(--space-7) var(--space-5) var(--space-6);
+    padding: var(--space-7) 0 var(--space-6);
     margin-top: auto;
 }
 
 .pp-site-footer__inner {
-    max-width: var(--content-max);
-    margin: 0 auto;
+    width: var(--content-width);
+    max-width: var(--content-cap);
+    margin-left: auto;
+    margin-right: auto;
     padding-inline: var(--content-pad);
     display: flex;
     flex-direction: column;
@@ -987,6 +1063,15 @@ html.pp-light .pp-hero-card--poem { background: #1a1814; }
     color: var(--pp-text-muted);
     max-width: 42ch;
     line-height: 1.65;
+}
+
+.pp-site-footer__byline {
+    font-family: var(--font-body);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--pp-accent);
 }
 
 .pp-site-footer__social {
@@ -1005,8 +1090,10 @@ html.pp-light .pp-hero-card--poem { background: #1a1814; }
 
 /* ── Works page ── */
 .pp-works__toolbar {
-    max-width: var(--content-max);
-    margin: 0 auto;
+    width: var(--content-width);
+    max-width: var(--content-cap);
+    margin-left: auto;
+    margin-right: auto;
     padding: var(--space-4) var(--content-pad) var(--space-4);
     display: flex;
     align-items: baseline;
@@ -1133,9 +1220,6 @@ html.pp-light .pp-hero-card--poem { background: #1a1814; }
         min-height: 260px;
     }
     .pp-hero-card__poem { padding: var(--space-5); }
-    .pp-categories {
-        padding: var(--space-6) var(--space-3) var(--space-7);
-    }
     .pp-categories__grid { grid-template-columns: 1fr; }
 }
 
@@ -1153,26 +1237,33 @@ html.pp-light .pp-hero-card--poem { background: #1a1814; }
         grid-column: 1 / -1 !important;
     }
     .pp-categories__heading { font-size: 1.65rem; }
-    .pp-site-footer { padding: var(--space-6) var(--space-3); }
+    .pp-site-footer { padding: var(--space-6) 0; }
 }
 
 /* ── Flickr justified photostream grid ── */
 .pp-photostream {
-    width: 100%;
+    width: var(--content-width);
+    max-width: var(--content-cap);
+    margin-left: auto;
+    margin-right: auto;
+    padding-inline: var(--content-pad);
     background: var(--pp-bg);
+    /* Row height must use this column width, not the full viewport. */
+    container-type: inline-size;
+    container-name: photostream;
 }
 
 .pp-flickr-grid {
     display: flex;
     flex-direction: column;
     gap: 2px;
-    padding: 2px;
+    padding: 2px 0;
 }
 
 .pp-flickr-row {
     display: flex;
     gap: 2px;
-    height: calc((100vw - 4px - (var(--item-count) - 1) * 2px) / var(--aspect-sum));
+    height: calc((100cqw - (var(--item-count) - 1) * 2px) / var(--aspect-sum));
     max-height: 360px;
     min-height: 120px;
 }
@@ -1998,8 +2089,10 @@ html.pp-light .pp-footer {
 
 /* ── Admin pages (practical studio surface) ── */
 .pp-admin-page {
-    max-width: var(--content-max);
-    margin: 0 auto;
+    width: var(--content-width);
+    max-width: var(--content-cap);
+    margin-left: auto;
+    margin-right: auto;
     padding: var(--space-5) var(--content-pad) var(--space-8);
     font-family: var(--font-ui);
 }
@@ -2414,7 +2507,7 @@ html.pp-light .pp-admin-placeholder { border-color: transparent; }
 /* ── Compact viewport composition ── */
 @media (min-width: 801px) {
     :root {
-        --header-height: 96px;
+        --header-height: 112px;
         --hero-height: clamp(420px, 56vh, 540px);
     }
 }
@@ -2760,9 +2853,10 @@ html.pp-light .pp-hero-admin__preset-preview span { background: #d8d0c4; }
 .pp-collection-rail-wrap,
 .pp-collection-stream-head,
 .pp-collection-empty {
-    width: 100%;
-    max-width: var(--content-max);
-    margin-inline: auto;
+    width: var(--content-width);
+    max-width: var(--content-cap);
+    margin-left: auto;
+    margin-right: auto;
     padding-inline: var(--content-pad);
 }
 

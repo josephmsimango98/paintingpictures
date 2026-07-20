@@ -1,20 +1,32 @@
 @page "/about"
 @rendermode InteractiveServer
+@inject SiteIdentityService IdentityService
 
-<PageTitle>About — The Irony</PageTitle>
+<PageTitle>About — @identity.SiteTitle</PageTitle>
 
 <SiteHeader />
 
 <main class="pp-simple-page">
     <h1 class="pp-simple-page__title">About</h1>
     <p class="pp-simple-page__lead">
-        The Irony is a curatorial collection of photographs, drawings, and poems —
-        exploring light, form, and the stories we hold.
+        @identity.SiteTitle is the work of @identity.ArtistName.
     </p>
     <p class="pp-simple-page__body">
-        Each work is presented with care: space to look, space to read, and room
-        for the quiet details that make a moment linger.
+        @identity.Statement
+    </p>
+    <p class="pp-simple-page__body">
+        Each piece is given room to be seen and read — photographs, drawings, and poems
+        as one quiet practice of looking.
     </p>
 </main>
 
 <SiteFooter />
+
+@code {
+    private SiteIdentity identity = SiteIdentity.Defaults;
+
+    protected override async Task OnInitializedAsync()
+    {
+        identity = await IdentityService.GetAsync();
+    }
+}

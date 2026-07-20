@@ -180,6 +180,31 @@ public sealed class SupabaseDataService
         }
     }
 
+    public async Task<SiteIdentity?> GetSiteIdentityAsync(CancellationToken cancellationToken = default)
+    {
+        var rows = await GetAsync<SiteIdentity>(
+            "site_identity?id=eq.1&select=*&limit=1",
+            cancellationToken);
+        return rows.FirstOrDefault();
+    }
+
+    public async Task SaveSiteIdentityAsync(
+        SiteIdentity identity,
+        CancellationToken cancellationToken = default) =>
+        _ = await SendAsync<JsonElement>(
+            HttpMethod.Post,
+            "site_identity?on_conflict=id",
+            new
+            {
+                id = 1,
+                site_title = identity.SiteTitle.Trim(),
+                artist_name = identity.ArtistName.Trim(),
+                statement = identity.Statement.Trim(),
+                updated_at = DateTimeOffset.UtcNow
+            },
+            "resolution=merge-duplicates,return=minimal",
+            cancellationToken);
+
     public async Task<UserProfile?> GetProfileAsync(string userId, CancellationToken cancellationToken = default)
     {
         var profiles = await GetAsync<UserProfile>(
