@@ -59,6 +59,27 @@
                 document.exitFullscreen();
             }
         };
+
+        window.ppUploadPortfolioImage = async function(input, url) {
+            if (!input || !input.files || !input.files[0])
+                throw new Error('No file selected.');
+            var file = input.files[0];
+            var form = new FormData();
+            form.append('file', file);
+            var res = await fetch(url, {
+                method: 'POST',
+                body: form,
+                credentials: 'same-origin'
+            });
+            var text = await res.text();
+            var payload = null;
+            try { payload = text ? JSON.parse(text) : null; } catch (_) {}
+            if (!res.ok) {
+                var detail = (payload && (payload.detail || payload.title)) || text || ('Upload failed (' + res.status + ')');
+                throw new Error(detail);
+            }
+            return payload;
+        };
     </script>
 </body>
 

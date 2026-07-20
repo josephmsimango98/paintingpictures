@@ -31,10 +31,14 @@ builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-// InputFile uploads ride the Blazor circuit; default SignalR limit is ~32 KB.
-builder.Services.Configure<Microsoft.AspNetCore.SignalR.HubOptions>(options =>
+// Allow large portfolio uploads (HEIC phone photos) over HTTP multipart.
+builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(options =>
 {
-    options.MaximumReceiveMessageSize = 30 * 1024 * 1024;
+    options.MultipartBodyLengthLimit = 30 * 1024 * 1024;
+});
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.MaxRequestBodySize = 30 * 1024 * 1024;
 });
 
 var app = builder.Build();
@@ -155,6 +159,68 @@ app.MapGet("/api/auth/logout", async (HttpContext ctx) =>
     await ctx.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
     return Results.Redirect("/");
 });
+
+// Admin image upload over HTTP (bypasses Blazor SignalR size limits).
+app.MapPost("/api/admin/portfolio/upload", async (
+    HttpRequest request,
+    PortfolioService portfolio,
+    CancellationToken cancellationToken) =>
+{
+    const long maxBytes = 25 * 1024 * 1024;
+    if (!request.HasFormContentType)
+        return Results.BadRequest(new { detail = "Expected a multipart file upload." });
+
+    var form = await request.ReadFormAsync(cancellationToken);
+    var file = form.Files.GetFile("file") ?? form.Files.FirstOrDefault();
+    if (file is null || file.Length == 0)
+        return Results.BadRequest(new { detail = "No file uploaded." });
+    if (file.Length > maxBytes)
+        return Results.BadRequest(new { detail = "Image must be 25 MB or smaller." });
+
+    var extension = Path.GetExtension(file.FileName);
+    var allowed = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+    {
+        ".jpg", ".jpeg", ".png", ".webp", ".gif", ".heic", ".heif"
+    };
+    if (!allowed.Contains(extension))
+        return Results.BadRequest(new { detail = "Please choose a JPEG, PNG, WebP, GIF, HEIC, or HEIF image." });
+
+    try
+    {
+        await using var stream = file.OpenReadStream();
+        var uploaded = await portfolio.UploadImageAsync(
+            stream,
+            file.FileName,
+            file.ContentType ?? "",
+            cancellationToken);
+
+        return Results.Ok(new
+        {
+            url = uploaded.Url,
+            displayUrl = uploaded.DisplayUrl,
+            previewDataUrl = uploaded.PreviewDataUrl,
+            width = uploaded.Width,
+            height = uploaded.Height,
+            isHeic = uploaded.IsHeic,
+            latitude = uploaded.Latitude,
+            longitude = uploaded.Longitude,
+            takenAt = uploaded.TakenAt,
+            cameraMake = uploaded.CameraMake,
+            cameraModel = uploaded.CameraModel,
+            inspectError = uploaded.InspectError,
+            convertError = uploaded.ConvertError
+        });
+    }
+    catch (Exception ex)
+    {
+        return Results.Problem(
+            detail: ex.InnerException?.Message ?? ex.Message,
+            statusCode: StatusCodes.Status500InternalServerError,
+            title: "Upload failed");
+    }
+})
+.RequireAuthorization(policy => policy.RequireRole("admin"))
+.DisableAntiforgery();
 
 // Convert HEIC (and similar) originals to JPEG on demand for browser display.
 app.MapGet("/api/media/{id:int}", async (

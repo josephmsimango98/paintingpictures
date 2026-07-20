@@ -54,8 +54,10 @@
                     <div class="pp-admin-field">
                         <label class="pp-admin-label">Upload picture</label>
                         <div class="pp-admin-upload">
-                            <InputFile OnChange="OnImageSelected"
-                                       accept=".jpg,.jpeg,.png,.webp,.gif,.heic,.heif,image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif" />
+                            <input type="file"
+                                   @ref="fileInput"
+                                   @onchange="OnImageSelected"
+                                   accept=".jpg,.jpeg,.png,.webp,.gif,.heic,.heif,image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif" />
                             @if (isUploading)
                             {
                                 <span class="pp-admin-upload-status">Uploading…</span>
@@ -236,14 +238,12 @@
     private IReadOnlyList<PortfolioItem> items = [];
     private PortfolioItem? Editing;
     private string? editingPreviewDataUrl;
+    private ElementReference fileInput;
     private bool isLoading = true;
     private bool isBusy;
     private bool isUploading;
     private string? statusMessage;
     private bool statusIsError;
-    private const long MaxUploadBytes = 25 * 1024 * 1024;
-    private static readonly HashSet<string> SupportedImageExtensions =
-        [".jpg", ".jpeg", ".png", ".webp", ".gif", ".heic", ".heif"];
     private string BackHref => LocalReturnUrl(ReturnUrl);
 
     private string? previewSrc =>
@@ -357,34 +357,23 @@
         isUploading = false;
     }
 
-    private async Task OnImageSelected(InputFileChangeEventArgs e)
+    private async Task OnImageSelected(ChangeEventArgs _)
     {
         if (Editing is null)
             return;
-
-        var file = e.File;
-        if (file is null)
-            return;
-
-        var extension = Path.GetExtension(file.Name);
-        if (!SupportedImageExtensions.Contains(extension, StringComparer.OrdinalIgnoreCase))
-        {
-            SetStatus("Please choose a JPEG, PNG, WebP, GIF, HEIC, or HEIF image.", isError: true);
-            return;
-        }
-
-        if (file.Size > MaxUploadBytes)
-        {
-            SetStatus("Image must be 25 MB or smaller.", isError: true);
-            return;
-        }
 
         isUploading = true;
         statusMessage = null;
         try
         {
-            await using var stream = file.OpenReadStream(MaxUploadBytes);
-            var uploaded = await PortfolioService.UploadImageAsync(stream, file.Name, file.ContentType);
+            var uploaded = await JS.InvokeAsync<BrowserUploadResult>(
+                "ppUploadPortfolioImage",
+                fileInput,
+                "/api/admin/portfolio/upload");
+
+            if (string.IsNullOrWhiteSpace(uploaded.Url))
+                throw new InvalidOperationException("Upload returned no image URL.");
+
             Editing.Image = uploaded.Url;
             Editing.ImageDisplay = uploaded.DisplayUrl;
             if (uploaded.Width > 0 && uploaded.Height > 0)
@@ -404,7 +393,7 @@
                 metaBits.Add($"{uploaded.Width} × {uploaded.Height}");
             if (uploaded.IsHeic)
                 metaBits.Add("original HEIC kept");
-            if (uploaded.DisplayUrl is not null)
+            if (!string.IsNullOrWhiteSpace(uploaded.DisplayUrl))
                 metaBits.Add("JPEG preview ready");
             if (uploaded.Latitude is not null && uploaded.Longitude is not null)
                 metaBits.Add($"location {uploaded.Latitude}, {uploaded.Longitude}");
@@ -438,6 +427,12 @@
         if (Editing is null)
             return;
 
+        if (isUploading)
+        {
+            SetStatus("Wait for the picture upload to finish before saving.", isError: true);
+            return;
+        }
+
         if (string.IsNullOrWhiteSpace(Editing.Title))
         {
             SetStatus("Title is required.", isError: true);
@@ -446,7 +441,9 @@
 
         if ((Editing.Type is "photograph" or "drawing") && string.IsNullOrWhiteSpace(Editing.Image))
         {
-            SetStatus("Upload a picture before saving a photograph or drawing.", isError: true);
+            SetStatus(
+                "Upload a picture before saving a photograph or drawing. Choose a file and wait until you see “Picture uploaded”.",
+                isError: true);
             return;
         }
 
@@ -556,4 +553,46 @@
         CameraModel = item.CameraModel,
         IsPublished = item.IsPublished
     };
+
+    private sealed class BrowserUploadResult
+    {
+        [System.Text.Json.Serialization.JsonPropertyName("url")]
+        public string Url { get; set; } = "";
+
+        [System.Text.Json.Serialization.JsonPropertyName("displayUrl")]
+        public string? DisplayUrl { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("previewDataUrl")]
+        public string? PreviewDataUrl { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("width")]
+        public int Width { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("height")]
+        public int Height { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("isHeic")]
+        public bool IsHeic { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("latitude")]
+        public double? Latitude { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("longitude")]
+        public double? Longitude { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("takenAt")]
+        public DateTimeOffset? TakenAt { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("cameraMake")]
+        public string? CameraMake { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("cameraModel")]
+        public string? CameraModel { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("inspectError")]
+        public string? InspectError { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("convertError")]
+        public string? ConvertError { get; set; }
+    }
 }
